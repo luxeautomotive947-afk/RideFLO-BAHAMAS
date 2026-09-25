@@ -456,6 +456,26 @@
         const cardElement = elements.create('card');
 
         function initializeCardCheckout() {
+            // SunCash Mobile Wallet Handler
+function triggerSunCashPayment() {
+    if (confirm("Redirecting to SunCash to complete payment. Click OK to approve.")) {
+        alert("SunCash payment approved! Dispatching your RideFlow driver.");
+        if (typeof simulateDriverMatching === 'function') {
+            simulateDriverMatching();
+        }
+    }
+}
+
+// Sand Dollar CBDC Wallet Handler
+function triggerSandDollarPay() {
+    const walletID = prompt("Enter your Sand Dollar Wallet ID or Alias:");
+    if (walletID) {
+        alert(`Sand Dollar transfer requested from ${walletID}. Payment confirmed!`);
+        if (typeof simulateDriverMatching === 'function') {
+            simulateDriverMatching();
+        }
+    }
+}
             document.getElementById('payment-modal').classList.remove('hidden');
             if (!cardElement._mounted) {
                 cardElement.mount('#card-element');
@@ -492,7 +512,20 @@
             }
         });
     </script>
+function triggerSunCashPayment() {
+    if (confirm("Redirecting to SunCash to complete payment. Click OK to approve.")) {
+        alert("SunCash payment approved! Dispatching your RideFlow driver.");
+        if (typeof simulateDriverMatching === 'function') simulateDriverMatching();
+    }
+}
 
+function triggerSandDollarPay() {
+    const walletID = prompt("Enter your Sand Dollar Wallet ID or Alias:");
+    if (walletID) {
+        alert(`Sand Dollar transfer requested from ${walletID}. Payment confirmed!`);
+        if (typeof simulateDriverMatching === 'function') simulateDriverMatching();
+    }
+}
 </body> <!-- Closing body tag -->
 </html> <!-- Closing html tag -->
 
