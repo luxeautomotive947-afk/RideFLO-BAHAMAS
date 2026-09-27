@@ -34,16 +34,16 @@
             </div>
         </div>
         <div class="flex items-center space-x-3">
-            <button class="bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1.5 rounded-lg border border-slate-600 transition">Driver Portal</button>
-            <button class="bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1.5 rounded-lg border border-slate-600 transition">History</button>
+            <button onclick="switchView('rider')" id="btn-view-rider" class="bg-emerald-500 text-slate-900 text-xs px-3 py-1.5 font-bold rounded-lg transition">Rider App</button>
+            <button onclick="switchView('payouts')" id="btn-view-payouts" class="bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1.5 rounded-lg border border-slate-600 transition">Driver Weekly Payouts</button>
         </div>
     </header>
 
     <!-- Main App Container -->
     <div class="flex flex-1 relative overflow-hidden">
         
-        <!-- Sidebar Panel -->
-        <div class="w-full md:w-[420px] bg-slate-800 border-r border-slate-700 flex flex-col z-20 shadow-2xl overflow-y-auto hide-scrollbar">
+        <!-- Sidebar Panel: RIDER VIEW -->
+        <div id="sidebar-rider" class="w-full md:w-[420px] bg-slate-800 border-r border-slate-700 flex flex-col z-20 shadow-2xl overflow-y-auto hide-scrollbar">
             
             <!-- STEP 1: ROUTE INPUT PANEL -->
             <div id="panel-route" class="p-6 flex flex-col h-full">
@@ -124,14 +124,12 @@
                     </div>
                 </div>
 
-                <!-- Payment Selection -->
+                <!-- Customer Payment Selection -->
                 <div class="mb-6">
-                    <label class="block text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2">Payment Option</label>
+                    <label class="block text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2">Customer Payment Method</label>
                     <select id="payment-method" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
-                        <option value="card_intl">Credit / Debit Card (Stripe)</option>
-                        <option value="suncash">SunCash Mobile Wallet</option>
-                        <option value="sand_dollar">Sand Dollar (Bahamas CBDC)</option>
-                        <option value="cash_vehicle">Cash / Pay Driver on Arrival</option>
+                        <option value="merchant_pos">Merchant Machine / POS Terminal (In-Person Swipe/Tap)</option>
+                        <option value="card_intl">Credit / Debit Card (Stripe Online)</option>
                     </select>
                 </div>
 
@@ -139,7 +137,40 @@
                     Confirm <span id="selected-tier-name">Economy</span> - $<span id="selected-tier-price">16.00</span>
                 </button>
             </div>
+        </div>
 
+        <!-- Sidebar Panel: WEEKLY DRIVER PAYOUTS VIEW (Hidden by default) -->
+        <div id="sidebar-payouts" class="w-full md:w-[420px] bg-slate-800 border-r border-slate-700 flex flex-col z-20 shadow-2xl p-6 overflow-y-auto hide-scrollbar hidden">
+            <h2 class="text-2xl font-bold mb-1">End-of-Week Driver Payouts</h2>
+            <p class="text-slate-400 text-sm mb-6">Disburse weekly driver earnings via SunCash or Sand Dollar.</p>
+
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2">Select Driver</label>
+                    <select id="payout-driver" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+                        <option value="driver_1">Marcus Rolle (Toyota Corolla) - $480.00</option>
+                        <option value="driver_2">Dwayne Miller (Honda Civic) - $610.00</option>
+                        <option value="driver_3">Keisha Ferguson (Nissan Note) - $525.00</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2">Payout Method</label>
+                    <select id="payout-rail" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+                        <option value="suncash">SunCash Mobile Wallet Payout</option>
+                        <option value="sand_dollar">Sand Dollar (CBDC) Transfer</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2">Payout Amount ($ BSD / USD)</label>
+                    <input id="payout-amount" type="text" value="480.00" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+                </div>
+            </div>
+
+            <button onclick="executeDriverPayout()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold py-3.5 rounded-xl transition shadow-lg shadow-emerald-500/20 mt-auto">
+                Send Weekly Payout <i class="fa-solid fa-paper-plane ml-2"></i>
+            </button>
         </div>
 
         <!-- Map Container -->
@@ -167,15 +198,34 @@
 
     <!-- Script Logic -->
     <script>
-        // Initialize Map centered on Nassau, New Providence, Bahamas
+        // Initialize Map centered on Nassau, New Providence, Bahamas using OpenStreetMap
         const map = L.map('map').setView([25.0343, -77.3963], 13);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{z}.png', {
-            attribution: '&copy; OpenStreetMap contributors & CARTO',
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
             maxZoom: 19
         }).addTo(map);
 
         let activeTier = 'Economy';
         let activePrice = 16.00;
+
+        function switchView(view) {
+            const riderSidebar = document.getElementById('sidebar-rider');
+            const payoutsSidebar = document.getElementById('sidebar-payouts');
+            const btnRider = document.getElementById('btn-view-rider');
+            const payoutsBtn = document.getElementById('btn-view-payouts');
+
+            if (view === 'rider') {
+                riderSidebar.classList.remove('hidden');
+                payoutsSidebar.classList.add('hidden');
+                btnRider.className = "bg-emerald-500 text-slate-900 text-xs px-3 py-1.5 font-bold rounded-lg transition";
+                payoutsBtn.className = "bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1.5 rounded-lg border border-slate-600 transition";
+            } else {
+                riderSidebar.classList.add('hidden');
+                payoutsSidebar.classList.remove('hidden');
+                payoutsBtn.className = "bg-emerald-500 text-slate-900 text-xs px-3 py-1.5 font-bold rounded-lg transition";
+                btnRider.className = "bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1.5 rounded-lg border border-slate-600 transition";
+            }
+        }
 
         function setDestination(place) {
             document.getElementById('input-destination').value = place;
@@ -206,15 +256,10 @@
         function confirmBooking() {
             const method = document.getElementById('payment-method').value;
 
-            if (method === 'card_intl') {
+            if (method === 'merchant_pos') {
+                triggerMerchantPOS();
+            } else if (method === 'card_intl') {
                 initializeCardCheckout();
-            } else if (method === 'suncash') {
-                triggerSunCashPayment();
-            } else if (method === 'sand_dollar') {
-                triggerSandDollarPay();
-            } else {
-                alert(`Ride booked with Cash on arrival! Dispatching your ${activeTier} driver now.`);
-                simulateDriverMatching();
             }
         }
 
@@ -249,25 +294,30 @@
                 payBtn.textContent = 'Pay & Book';
             } else {
                 document.getElementById('payment-modal').classList.add('hidden');
-                alert('Card payment successful via Stripe! Dispatching your RideFlow driver now.');
+                alert('Card payment successful via Stripe! Dispatching driver.');
                 payBtn.disabled = false;
                 payBtn.textContent = 'Pay & Book';
                 simulateDriverMatching();
             }
         }
 
-        function triggerSunCashPayment() {
-            if (confirm("Redirecting to SunCash secure gateway to complete fare payment. Click OK to authorize.")) {
-                alert("SunCash payment approved! Dispatching your RideFlow driver.");
+        function triggerMerchantPOS() {
+            const authCode = prompt("Swipe/Tap customer card on your physical merchant terminal. Enter receipt approval code:");
+            if (authCode) {
+                alert(`Merchant machine payment approved (Code: ${authCode})! Dispatching driver.`);
                 simulateDriverMatching();
             }
         }
 
-        function triggerSandDollarPay() {
-            const walletID = prompt("Enter your Sand Dollar Wallet ID or Alias (e.g. user@sancico):");
-            if (walletID) {
-                alert(`Sand Dollar Central Bank digital currency transfer confirmed from ${walletID}. Dispatching driver!`);
-                simulateDriverMatching();
+        function executeDriverPayout() {
+            const driver = document.getElementById('payout-driver').value;
+            const rail = document.getElementById('payout-rail').value;
+            const amount = document.getElementById('payout-amount').value;
+
+            if (rail === 'suncash') {
+                alert(`Successfully sent $${amount} weekly payout to driver via SunCash mobile wallet!`);
+            } else {
+                alert(`Successfully transferred $${amount} BSD to driver's Sand Dollar CBDC digital wallet!`);
             }
         }
 
