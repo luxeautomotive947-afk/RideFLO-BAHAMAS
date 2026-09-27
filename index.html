@@ -124,7 +124,7 @@
                     </div>
                 </div>
 
-                <!-- Customer Payment Selection (PayPal Secure Checkout) -->
+                <!-- Customer Payment Selection -->
                 <div class="mb-6">
                     <label class="block text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2">Customer Checkout</label>
                     <div class="bg-slate-900 border border-slate-700 rounded-xl p-3.5 flex items-center justify-between">
@@ -143,6 +143,57 @@
                     Pay with PayPal (<span id="selected-tier-name">Economy</span> - $<span id="selected-tier-price">16.00</span>)
                 </button>
             </div>
+
+            <!-- STEP 3: ACTIVE RIDE & DRIVER DETAILS PANEL (Hidden by default) -->
+            <div id="panel-active-ride" class="p-6 flex flex-col h-full hidden">
+                <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 text-center mb-4">
+                    <span class="text-xs text-emerald-400 font-bold uppercase tracking-wider">Driver En Route</span>
+                    <h3 class="text-lg font-bold text-white">Your Ride is Matched!</h3>
+                </div>
+
+                <!-- Driver & Vehicle Details Card -->
+                <div class="bg-slate-900 border border-slate-700 rounded-xl p-4 mb-4 space-y-3">
+                    <div class="flex items-center space-x-3 border-b border-slate-800 pb-3">
+                        <div class="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center text-emerald-400 font-bold text-lg border border-slate-700">
+                            MR
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-sm text-white" id="driver-name-display">Marcus Rolle</h4>
+                            <div class="flex items-center text-xs text-amber-400 space-x-1 mt-0.5">
+                                <i class="fa-solid fa-star"></i>
+                                <span class="font-bold text-slate-200" id="driver-rating-display">4.92</span>
+                                <span class="text-slate-500">· Verified Driver</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 pt-1 text-xs">
+                        <div>
+                            <span class="text-slate-400 block">Vehicle Model</span>
+                            <span class="font-bold text-slate-200" id="driver-vehicle-display">2022 Toyota Corolla</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block">License Plate</span>
+                            <span class="font-bold text-emerald-400 font-mono tracking-wide" id="driver-plate-display">EL-8892</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Support Tools: Lost & Found / Cancellation -->
+                <div class="space-y-3 mb-6 mt-auto">
+                    <button onclick="reportLostItem()" class="w-full bg-slate-900 hover:bg-slate-700 border border-slate-700 text-xs font-semibold py-3 rounded-xl transition flex items-center justify-center text-slate-200">
+                        <i class="fa-solid fa-box-archive mr-2 text-amber-400"></i> Left Something in the Car?
+                    </button>
+                    
+                    <button onclick="cancelRideWithFee()" class="w-full bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 text-xs font-semibold py-3 rounded-xl transition flex items-center justify-center">
+                        <i class="fa-solid fa-ban mr-2"></i> Cancel Ride ($9.00 Fee Applies)
+                    </button>
+                </div>
+
+                <button onclick="resetApp()" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl transition text-xs">
+                    Simulate Trip Completed
+                </button>
+            </div>
         </div>
 
         <!-- Sidebar Panel: DRIVER COMPLIANCE & VERIFICATION VIEW -->
@@ -151,7 +202,7 @@
             <p class="text-slate-400 text-sm mb-4">Bahamas Road Traffic Department & Safety Standards Registry.</p>
 
             <div class="space-y-3 mb-6">
-                <!-- Police Record / Character Certificate -->
+                <!-- Police Record -->
                 <div class="bg-slate-900 border border-slate-700 rounded-xl p-3.5">
                     <div class="flex items-center justify-between mb-1">
                         <span class="text-xs font-bold flex items-center"><i class="fa-solid fa-shield-halved text-emerald-400 mr-2"></i>Police Record (Character Certificate)</span>
@@ -205,7 +256,7 @@
             </button>
         </div>
 
-        <!-- Sidebar Panel: WEEKLY DRIVER PAYOUTS VIEW (Hidden by default) -->
+        <!-- Sidebar Panel: WEEKLY DRIVER PAYOUTS VIEW -->
         <div id="sidebar-payouts" class="w-full md:w-[420px] bg-slate-800 border-r border-slate-700 flex flex-col z-20 shadow-2xl p-6 overflow-y-auto hide-scrollbar hidden">
             <h2 class="text-2xl font-bold mb-1">End-of-Week Driver Payouts</h2>
             <p class="text-slate-400 text-sm mb-6">Disburse weekly driver earnings via SunCash, Sand Dollar, or Bank Transfer.</p>
@@ -251,7 +302,7 @@
     <script>
         // Initialize Map centered on Nassau, New Providence, Bahamas using OpenStreetMap
         const map = L.map('map').setView([25.0343, -77.3963], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}x/{y}.png', {
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors',
             maxZoom: 19
         }).addTo(map);
@@ -267,6 +318,14 @@
             'Baha Mar': { base: 19.00, label: 'Downtown to Cable Beach / Baha Mar (~18 min)' },
             'default': { base: 16.00, label: 'Custom Route across New Providence' }
         };
+
+        const mockDrivers = [
+            { name: 'Marcus Rolle', rating: '4.92', vehicle: '2022 Toyota Corolla', plate: 'EL-8892', initials: 'MR' },
+            { name: 'Dwayne Miller', rating: '4.88', vehicle: '2021 Honda Civic', plate: 'AN-3410', initials: 'DM' },
+            { name: 'Keisha Ferguson', rating: '4.96', vehicle: '2023 Nissan Note', plate: 'BS-9021', initials: 'KF' }
+        ];
+
+        let activeDriver = mockDrivers[0];
 
         function switchView(view) {
             const riderSidebar = document.getElementById('sidebar-rider');
@@ -348,6 +407,49 @@
             });
         }
 
+        function confirmBooking() {
+            const finalPrice = currentFares[activeTier].toFixed(2);
+            const confirmPayPal = confirm(`Proceeding to PayPal Secure Checkout for ${activeTier} ($${finalPrice}). Complete payment to dispatch a verified driver.`);
+            if (confirmPayPal) {
+                // Randomly pick a driver profile
+                activeDriver = mockDrivers[Math.floor(Math.random() * mockDrivers.length)];
+                
+                // Populate active ride panel
+                document.getElementById('driver-name-display').innerText = activeDriver.name;
+                document.getElementById('driver-rating-display').innerText = activeDriver.rating;
+                document.getElementById('driver-vehicle-display').innerText = activeDriver.vehicle;
+                document.getElementById('driver-plate-display').innerText = activeDriver.plate;
+
+                // Switch panels
+                document.getElementById('panel-tiers').classList.add('hidden');
+                document.getElementById('panel-active-ride').classList.remove('hidden');
+
+                alert("PayPal payment authorized successfully! Driver matched.");
+                simulateDriverMatching();
+            }
+        }
+
+        function reportLostItem() {
+            const itemDesc = prompt("Describe the item you left in the vehicle (e.g., black leather wallet, iPhone):");
+            if (itemDesc) {
+                alert(`Lost item report logged for "${itemDesc}". RideFlow support has contacted driver ${activeDriver.name} (${activeDriver.plate}) directly. They will reach out to you shortly!`);
+            }
+        }
+
+        function cancelRideWithFee() {
+            const confirmCancel = confirm("Are you sure you want to cancel your ride? A $9.00 cancellation fee will be charged to your payment method.");
+            if (confirmCancel) {
+                alert("Ride cancelled successfully. A $9.00 cancellation fee has been applied.");
+                resetApp();
+            }
+        }
+
+        function resetApp() {
+            document.getElementById('panel-active-ride').classList.add('hidden');
+            document.getElementById('panel-route').classList.remove('hidden');
+            document.getElementById('input-destination').value = '';
+        }
+
         function submitComplianceDocuments() {
             const police = document.getElementById('file-police').files.length;
             const license = document.getElementById('file-license').files.length;
@@ -377,15 +479,6 @@
             }
         }
 
-        function confirmBooking() {
-            const finalPrice = currentFares[activeTier].toFixed(2);
-            const confirmPayPal = confirm(`Proceeding to PayPal Secure Checkout for ${activeTier} ($${finalPrice}). Complete payment to dispatch a verified driver.`);
-            if (confirmPayPal) {
-                alert("PayPal payment authorized successfully! Dispatching your fully compliant RideFlow driver.");
-                simulateDriverMatching();
-            }
-        }
-
         function executeDriverPayout() {
             const rail = document.getElementById('payout-rail').value;
             const amount = document.getElementById('payout-amount').value;
@@ -401,7 +494,7 @@
 
         function simulateDriverMatching() {
             L.marker([25.0443, -77.3463]).addTo(map)
-                .bindPopup("<b>Verified Driver En Route</b><br>Vehicle: Toyota Corolla (White)<br><span style='color: #34d399;'>✔ $50 Fee Paid & Documents Checked</span>").openPopup();
+                .bindPopup(`<b>${activeDriver.name} En Route</b><br>${activeDriver.vehicle}<br>Plate: <b>${activeDriver.plate}</b><br><span style='color: #34d399;'>✔ Rating: ${activeDriver.rating} ★</span>`).openPopup();
             map.setView([25.0443, -77.3463], 14);
             setTimeout(() => { map.invalidateSize(); }, 100);
         }
