@@ -194,6 +194,9 @@
             maxZoom: 19
         }).addTo(map);
 
+        // Force Leaflet to calculate map size correctly on load
+        setTimeout(() => { map.invalidateSize(); }, 200);
+
         let activeTier = 'Economy';
         let activePrice = 16.00;
 
@@ -214,6 +217,8 @@
                 payoutsBtn.className = "bg-emerald-500 text-slate-900 text-xs px-3 py-1.5 font-bold rounded-lg transition";
                 btnRider.className = "bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1.5 rounded-lg border border-slate-600 transition";
             }
+            // Refresh map rendering bounds when switching panels
+            setTimeout(() => { map.invalidateSize(); }, 100);
         }
 
         function setDestination(place) {
@@ -228,11 +233,13 @@
             }
             document.getElementById('panel-route').classList.add('hidden');
             document.getElementById('panel-tiers').classList.remove('hidden');
+            setTimeout(() => { map.invalidateSize(); }, 100);
         }
 
         function backToRoute() {
             document.getElementById('panel-tiers').classList.add('hidden');
             document.getElementById('panel-route').classList.remove('hidden');
+            setTimeout(() => { map.invalidateSize(); }, 100);
         }
 
         function selectTier(tier, price) {
@@ -267,6 +274,7 @@
             L.marker([25.0443, -77.3463]).addTo(map)
                 .bindPopup("<b>Your Driver is En Route</b><br>Vehicle: Toyota Corolla (White)").openPopup();
             map.setView([25.0443, -77.3463], 14);
+            setTimeout(() => { map.invalidateSize(); }, 100);
         }
     </script>
 </body>
