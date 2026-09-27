@@ -31,9 +31,10 @@
                 <span class="text-xs text-emerald-400 font-medium">Nassau, Bahamas</span>
             </div>
         </div>
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-2">
             <button onclick="switchView('rider')" id="btn-view-rider" class="bg-emerald-500 text-slate-900 text-xs px-3 py-1.5 font-bold rounded-lg transition">Rider App</button>
-            <button onclick="switchView('payouts')" id="btn-view-payouts" class="bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1.5 rounded-lg border border-slate-600 transition">Driver Weekly Payouts</button>
+            <button onclick="switchView('compliance')" id="btn-view-compliance" class="bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1.5 rounded-lg border border-slate-600 transition">Driver Compliance</button>
+            <button onclick="switchView('payouts')" id="btn-view-payouts" class="bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1.5 rounded-lg border border-slate-600 transition">Payouts</button>
         </div>
     </header>
 
@@ -75,29 +76,30 @@
                 </div>
 
                 <button onclick="showRideTiers()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold py-3.5 rounded-xl transition shadow-lg shadow-emerald-500/20 mt-auto">
-                    See Available Rides <i class="fa-solid fa-arrow-right ml-2"></i>
+                    Calculate Real-Time Fares <i class="fa-solid fa-arrow-right ml-2"></i>
                 </button>
             </div>
 
             <!-- STEP 2: RIDE TIERS PANEL (Hidden by default) -->
             <div id="panel-tiers" class="p-6 flex flex-col h-full hidden">
                 <button onclick="backToRoute()" class="text-slate-400 hover:text-white text-sm mb-4 flex items-center"><i class="fa-solid fa-arrow-left mr-2"></i> Change Route</button>
-                <h2 class="text-2xl font-bold mb-4">Choose a Ride Tier</h2>
+                <h2 class="text-2xl font-bold mb-1">Choose a Ride Tier</h2>
+                <p id="route-summary-text" class="text-emerald-400 text-xs font-medium mb-4">Route: Downtown to Destination</p>
 
                 <div class="space-y-3 mb-6">
-                    <div onclick="selectTier('Economy', 16)" class="tier-card bg-slate-900 border-2 border-emerald-500 rounded-xl p-4 cursor-pointer flex items-center justify-between">
+                    <div onclick="selectTier('Economy')" id="card-Economy" class="tier-card bg-slate-900 border-2 border-emerald-500 rounded-xl p-4 cursor-pointer flex items-center justify-between">
                         <div class="flex items-center space-x-3">
                             <div class="bg-slate-800 p-3 rounded-lg"><i class="fa-solid fa-car text-emerald-400 text-lg"></i></div>
                             <div>
-                                <h3 id="tier-name-1" class="font-bold text-sm">RideFlow Economy</h3>
+                                <h3 class="font-bold text-sm">RideFlow Economy</h3>
                                 <p class="text-xs text-slate-400">Standard compact vehicle</p>
                                 <span class="text-xs text-emerald-400 font-medium"><i class="fa-regular fa-clock mr-1"></i>3 min away</span>
                             </div>
                         </div>
-                        <span class="font-bold text-lg">$16.00</span>
+                        <span id="price-Economy" class="font-bold text-lg">$16.00</span>
                     </div>
 
-                    <div onclick="selectTier('Comfort', 22)" class="tier-card bg-slate-900 border border-slate-700 rounded-xl p-4 cursor-pointer flex items-center justify-between hover:border-slate-500 transition">
+                    <div onclick="selectTier('Comfort')" id="card-Comfort" class="tier-card bg-slate-900 border border-slate-700 rounded-xl p-4 cursor-pointer flex items-center justify-between hover:border-slate-500 transition">
                         <div class="flex items-center space-x-3">
                             <div class="bg-slate-800 p-3 rounded-lg"><i class="fa-solid fa-car-rear text-blue-400 text-lg"></i></div>
                             <div>
@@ -106,10 +108,10 @@
                                 <span class="text-xs text-blue-400 font-medium"><i class="fa-regular fa-clock mr-1"></i>4 min away</span>
                             </div>
                         </div>
-                        <span class="font-bold text-lg">$22.00</span>
+                        <span id="price-Comfort" class="font-bold text-lg">$22.00</span>
                     </div>
 
-                    <div onclick="selectTier('Van/Bus', 34)" class="tier-card bg-slate-900 border border-slate-700 rounded-xl p-4 cursor-pointer flex items-center justify-between hover:border-slate-500 transition">
+                    <div onclick="selectTier('Van/Bus')" id="card-Van/Bus" class="tier-card bg-slate-900 border border-slate-700 rounded-xl p-4 cursor-pointer flex items-center justify-between hover:border-slate-500 transition">
                         <div class="flex items-center space-x-3">
                             <div class="bg-slate-800 p-3 rounded-lg"><i class="fa-solid fa-van-shuttle text-amber-400 text-lg"></i></div>
                             <div>
@@ -118,7 +120,7 @@
                                 <span class="text-xs text-amber-400 font-medium"><i class="fa-regular fa-clock mr-1"></i>5 min away</span>
                             </div>
                         </div>
-                        <span class="font-bold text-lg">$34.00</span>
+                        <span id="price-Van/Bus" class="font-bold text-lg">$34.00</span>
                     </div>
                 </div>
 
@@ -143,6 +145,66 @@
             </div>
         </div>
 
+        <!-- Sidebar Panel: DRIVER COMPLIANCE & VERIFICATION VIEW -->
+        <div id="sidebar-compliance" class="w-full md:w-[420px] bg-slate-800 border-r border-slate-700 flex flex-col z-20 shadow-2xl p-6 overflow-y-auto hide-scrollbar hidden">
+            <h2 class="text-2xl font-bold mb-1">Driver Verification & Compliance</h2>
+            <p class="text-slate-400 text-sm mb-4">Bahamas Road Traffic Department & Safety Standards Registry.</p>
+
+            <div class="space-y-3 mb-6">
+                <!-- Police Record / Character Certificate -->
+                <div class="bg-slate-900 border border-slate-700 rounded-xl p-3.5">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-xs font-bold flex items-center"><i class="fa-solid fa-shield-halved text-emerald-400 mr-2"></i>Police Record (Character Certificate)</span>
+                        <span id="status-police" class="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded font-medium">Pending</span>
+                    </div>
+                    <input type="file" id="file-police" class="w-full text-[11px] text-slate-400 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-slate-800 file:text-emerald-400 hover:file:bg-slate-700 cursor-pointer mt-1">
+                </div>
+
+                <!-- Drivers License -->
+                <div class="bg-slate-900 border border-slate-700 rounded-xl p-3.5">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-xs font-bold flex items-center"><i class="fa-solid fa-id-card text-emerald-400 mr-2"></i>Bahamas Driver's License</span>
+                        <span id="status-license" class="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded font-medium">Pending</span>
+                    </div>
+                    <input type="file" id="file-license" class="w-full text-[11px] text-slate-400 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-slate-800 file:text-emerald-400 hover:file:bg-slate-700 cursor-pointer mt-1">
+                </div>
+
+                <!-- Host Vehicle Insurance -->
+                <div class="bg-slate-900 border border-slate-700 rounded-xl p-3.5">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-xs font-bold flex items-center"><i class="fa-solid fa-file-contract text-emerald-400 mr-2"></i>Host Vehicle Insurance</span>
+                        <span id="status-insurance" class="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded font-medium">Pending</span>
+                    </div>
+                    <input type="file" id="file-insurance" class="w-full text-[11px] text-slate-400 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-slate-800 file:text-emerald-400 hover:file:bg-slate-700 cursor-pointer mt-1">
+                </div>
+
+                <!-- Vehicle License / Inspection Disc -->
+                <div class="bg-slate-900 border border-slate-700 rounded-xl p-3.5">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-xs font-bold flex items-center"><i class="fa-solid fa-car text-emerald-400 mr-2"></i>Vehicle License & Inspection</span>
+                        <span id="status-vehicle" class="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded font-medium">Pending</span>
+                    </div>
+                    <input type="file" id="file-vehicle" class="w-full text-[11px] text-slate-400 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-slate-800 file:text-emerald-400 hover:file:bg-slate-700 cursor-pointer mt-1">
+                </div>
+            </div>
+
+            <!-- Registration Fee Box -->
+            <div class="bg-slate-900 border border-emerald-500/40 rounded-xl p-3.5 mb-4 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-brands fa-paypal text-blue-400 text-lg"></i>
+                    <div>
+                        <h4 class="text-xs font-bold">One-Time Registration Fee</h4>
+                        <p class="text-[11px] text-slate-400">Background processing & verification</p>
+                    </div>
+                </div>
+                <span class="font-bold text-emerald-400 text-sm">$50.00</span>
+            </div>
+
+            <button onclick="submitComplianceDocuments()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold py-3.5 rounded-xl transition shadow-lg shadow-emerald-500/25 mt-auto text-sm">
+                Pay $50 Fee & Submit Documents <i class="fa-solid fa-circle-check ml-1.5"></i>
+            </button>
+        </div>
+
         <!-- Sidebar Panel: WEEKLY DRIVER PAYOUTS VIEW (Hidden by default) -->
         <div id="sidebar-payouts" class="w-full md:w-[420px] bg-slate-800 border-r border-slate-700 flex flex-col z-20 shadow-2xl p-6 overflow-y-auto hide-scrollbar hidden">
             <h2 class="text-2xl font-bold mb-1">End-of-Week Driver Payouts</h2>
@@ -150,11 +212,11 @@
 
             <div class="space-y-4 mb-6">
                 <div>
-                    <label class="block text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2">Select Driver</label>
+                    <label class="block text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2">Select Verified Driver</label>
                     <select id="payout-driver" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
-                        <option value="driver_1">Marcus Rolle (Toyota Corolla) - $480.00</option>
-                        <option value="driver_2">Dwayne Miller (Honda Civic) - $610.00</option>
-                        <option value="driver_3">Keisha Ferguson (Nissan Note) - $525.00</option>
+                        <option value="driver_1">Marcus Rolle (Toyota Corolla) - $480.00 [Verified]</option>
+                        <option value="driver_2">Dwayne Miller (Honda Civic) - $610.00 [Verified]</option>
+                        <option value="driver_3">Keisha Ferguson (Nissan Note) - $525.00 [Verified]</option>
                     </select>
                 </div>
 
@@ -189,35 +251,50 @@
     <script>
         // Initialize Map centered on Nassau, New Providence, Bahamas using OpenStreetMap
         const map = L.map('map').setView([25.0343, -77.3963], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}x/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors',
             maxZoom: 19
         }).addTo(map);
 
-        // Force Leaflet to calculate map size correctly on load
         setTimeout(() => { map.invalidateSize(); }, 200);
 
         let activeTier = 'Economy';
-        let activePrice = 16.00;
+        let currentFares = { Economy: 16.00, Comfort: 22.00, 'Van/Bus': 34.00 };
+
+        const destinationRates = {
+            'LPIA Airport': { base: 22.00, label: 'Downtown to LPIA Airport (~25 min)' },
+            'Atlantis Resort': { base: 15.00, label: 'Downtown to Paradise Island / Atlantis (~12 min)' },
+            'Baha Mar': { base: 19.00, label: 'Downtown to Cable Beach / Baha Mar (~18 min)' },
+            'default': { base: 16.00, label: 'Custom Route across New Providence' }
+        };
 
         function switchView(view) {
             const riderSidebar = document.getElementById('sidebar-rider');
+            const complianceSidebar = document.getElementById('sidebar-compliance');
             const payoutsSidebar = document.getElementById('sidebar-payouts');
+            
             const btnRider = document.getElementById('btn-view-rider');
+            const btnCompliance = document.getElementById('btn-view-compliance');
             const payoutsBtn = document.getElementById('btn-view-payouts');
+
+            riderSidebar.classList.add('hidden');
+            complianceSidebar.classList.add('hidden');
+            payoutsSidebar.classList.add('hidden');
+            
+            btnRider.className = "bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1.5 rounded-lg border border-slate-600 transition";
+            btnCompliance.className = "bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1.5 rounded-lg border border-slate-600 transition";
+            payoutsBtn.className = "bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1.5 rounded-lg border border-slate-600 transition";
 
             if (view === 'rider') {
                 riderSidebar.classList.remove('hidden');
-                payoutsSidebar.classList.add('hidden');
                 btnRider.className = "bg-emerald-500 text-slate-900 text-xs px-3 py-1.5 font-bold rounded-lg transition";
-                payoutsBtn.className = "bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1.5 rounded-lg border border-slate-600 transition";
+            } else if (view === 'compliance') {
+                complianceSidebar.classList.remove('hidden');
+                btnCompliance.className = "bg-emerald-500 text-slate-900 text-xs px-3 py-1.5 font-bold rounded-lg transition";
             } else {
-                riderSidebar.classList.add('hidden');
                 payoutsSidebar.classList.remove('hidden');
                 payoutsBtn.className = "bg-emerald-500 text-slate-900 text-xs px-3 py-1.5 font-bold rounded-lg transition";
-                btnRider.className = "bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1.5 rounded-lg border border-slate-600 transition";
             }
-            // Refresh map rendering bounds when switching panels
             setTimeout(() => { map.invalidateSize(); }, 100);
         }
 
@@ -226,13 +303,27 @@
         }
 
         function showRideTiers() {
-            const dest = document.getElementById('input-destination').value;
-            if(!dest) {
+            const destInput = document.getElementById('input-destination').value.trim();
+            if(!destInput) {
                 alert("Please enter a destination first.");
                 return;
             }
+
+            let matchKey = Object.keys(destinationRates).find(k => destInput.toLowerCase().includes(k.toLowerCase())) || 'default';
+            let routeData = destinationRates[matchKey];
+
+            currentFares['Economy'] = routeData.base;
+            currentFares['Comfort'] = Math.round(routeData.base * 1.38);
+            currentFares['Van/Bus'] = Math.round(routeData.base * 1.95);
+
+            document.getElementById('price-Economy').innerText = `$${currentFares['Economy'].toFixed(2)}`;
+            document.getElementById('price-Comfort').innerText = `$${currentFares['Comfort'].toFixed(2)}`;
+            document.getElementById('price-Van/Bus').innerText = `$${currentFares['Van/Bus'].toFixed(2)}`;
+            document.getElementById('route-summary-text').innerText = routeData.label;
+
             document.getElementById('panel-route').classList.add('hidden');
             document.getElementById('panel-tiers').classList.remove('hidden');
+            selectTier('Economy');
             setTimeout(() => { map.invalidateSize(); }, 100);
         }
 
@@ -242,17 +333,55 @@
             setTimeout(() => { map.invalidateSize(); }, 100);
         }
 
-        function selectTier(tier, price) {
+        function selectTier(tier) {
             activeTier = tier;
-            activePrice = price;
             document.getElementById('selected-tier-name').innerText = tier;
-            document.getElementById('selected-tier-price').innerText = price.toFixed(2);
+            document.getElementById('selected-tier-price').innerText = currentFares[tier].toFixed(2);
+
+            ['Economy', 'Comfort', 'Van/Bus'].forEach(t => {
+                const card = document.getElementById(`card-${t}`);
+                if (t === tier) {
+                    card.className = "tier-card bg-slate-900 border-2 border-emerald-500 rounded-xl p-4 cursor-pointer flex items-center justify-between";
+                } else {
+                    card.className = "tier-card bg-slate-900 border border-slate-700 rounded-xl p-4 cursor-pointer flex items-center justify-between hover:border-slate-500 transition";
+                }
+            });
+        }
+
+        function submitComplianceDocuments() {
+            const police = document.getElementById('file-police').files.length;
+            const license = document.getElementById('file-license').files.length;
+            const insurance = document.getElementById('file-insurance').files.length;
+            const vehicle = document.getElementById('file-vehicle').files.length;
+
+            if(!police || !license || !insurance || !vehicle) {
+                alert("Please attach all 4 regulatory documents (Police Record, Driver's License, Vehicle Insurance, and Vehicle Inspection Disc) before paying the fee.");
+                return;
+            }
+
+            const confirmFee = confirm("Proceeding to PayPal Secure Checkout for the $50.00 Driver Registration & Verification Fee. Complete payment to finalize activation.");
+            if (confirmFee) {
+                document.getElementById('status-police').className = "text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-medium";
+                document.getElementById('status-police').innerText = "Verified";
+
+                document.getElementById('status-license').className = "text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-medium";
+                document.getElementById('status-license').innerText = "Verified";
+
+                document.getElementById('status-insurance').className = "text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-medium";
+                document.getElementById('status-insurance').innerText = "Verified";
+
+                document.getElementById('status-vehicle').className = "text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-medium";
+                document.getElementById('status-vehicle').innerText = "Verified";
+
+                alert("$50.00 registration fee successfully processed via PayPal! All compliance records accepted. Your driver account is now fully approved.");
+            }
         }
 
         function confirmBooking() {
-            const confirmPayPal = confirm(`Proceeding to PayPal Secure Checkout for $${activePrice.toFixed(2)}. Enter card info or log in to PayPal to complete payment.`);
+            const finalPrice = currentFares[activeTier].toFixed(2);
+            const confirmPayPal = confirm(`Proceeding to PayPal Secure Checkout for ${activeTier} ($${finalPrice}). Complete payment to dispatch a verified driver.`);
             if (confirmPayPal) {
-                alert("PayPal payment authorized successfully! Dispatching your RideFlow driver.");
+                alert("PayPal payment authorized successfully! Dispatching your fully compliant RideFlow driver.");
                 simulateDriverMatching();
             }
         }
@@ -272,7 +401,7 @@
 
         function simulateDriverMatching() {
             L.marker([25.0443, -77.3463]).addTo(map)
-                .bindPopup("<b>Your Driver is En Route</b><br>Vehicle: Toyota Corolla (White)").openPopup();
+                .bindPopup("<b>Verified Driver En Route</b><br>Vehicle: Toyota Corolla (White)<br><span style='color: #34d399;'>✔ $50 Fee Paid & Documents Checked</span>").openPopup();
             map.setView([25.0443, -77.3463], 14);
             setTimeout(() => { map.invalidateSize(); }, 100);
         }
