@@ -499,5 +499,76 @@
             setTimeout(() => { map.invalidateSize(); }, 100);
         }
     </script>
+    import React from 'react';
+import { StyleSheet, SafeAreaView, StatusBar, View, Text, PermissionsAndroid, Platform } from 'react-native';
+import { WebView } from 'react-native-webview';
+
+export default function DriverApp() {
+  React.useEffect(() => {
+    async function requestDriverLocationPermission() {
+      if (Platform.OS === 'android') {
+        try {
+          await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+            {
+              title: 'Driver GPS Permission',
+              message: 'RideFlow Driver requires active location tracking to dispatch rides in your area.',
+              buttonNeutral: 'Ask Me Later',
+              buttonNegative: 'Cancel',
+              buttonPositive: 'OK',
+            },
+          );
+        } catch (err) {
+          console.warn(err);
+        }
+      }
+    }
+    requestDriverLocationPermission();
+  }, []);
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#090d16" />
+      <WebView 
+        source={{ uri: 'https://luxeautomotive947-afk.github.io/RideFLO-BAHAMAS/' }}
+        style={styles.webview}
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        startInLoadingState={true}
+        geolocationEnabled={true}
+        javaScriptCanOpenWindowsAutomatically={true}
+        mixedContentMode="always"
+        renderError={(errorName) => (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>Driver portal connection error: {errorName}</Text>
+          </View>
+        )}
+      />
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#090d16',
+  },
+  webview: {
+    flex: 1,
+    backgroundColor: '#090d16',
+  },
+  errorContainer: {
+    flex: 1,
+    backgroundColor: '#090d16',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    color: '#ffffff',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+});
 </body>
 </html>
