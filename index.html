@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>RideFlow Bahamas</title>
+  <!-- Leaflet CSS for Real Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     body {
       background: linear-gradient(rgba(9, 13, 22, 0.85), rgba(9, 13, 22, 0.95)), 
@@ -97,7 +99,7 @@
       margin-bottom: 6px;
       font-weight: bold;
     }
-    input {
+    input, textarea, select {
       width: 100%;
       padding: 12px;
       background: #1a2233;
@@ -141,42 +143,25 @@
       margin-bottom: 15px;
       cursor: pointer;
     }
-    .map-simulation {
-      background: #090d16;
-      border: 1px solid rgba(197, 160, 89, 0.4);
+    #map {
+      width: 100%;
       height: 180px;
       border-radius: 8px;
-      position: relative;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      border: 1px solid rgba(197, 160, 89, 0.4);
       margin-bottom: 15px;
+      z-index: 1;
     }
-    .map-grid {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      background-image: radial-gradient(rgba(197, 160, 89, 0.2) 1px, transparent 1px);
-      background-size: 20px 20px;
+    .star {
+      font-size: 28px;
+      cursor: pointer;
+      color: #4a5568;
     }
-    .car-marker {
-      background: #c5a059;
-      color: #090d16;
-      padding: 6px 12px;
-      font-weight: bold;
-      border-radius: 20px;
-      font-size: 12px;
-      box-shadow: 0 0 15px rgba(197, 160, 89, 0.8);
-      z-index: 2;
-      animation: pulseCar 2s infinite;
-    }
-    @keyframes pulseCar {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.08); }
-      100% { transform: scale(1); }
+    .star.active {
+      color: #c5a059;
     }
   </style>
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 
@@ -190,18 +175,40 @@
     </div>
   </div>
 
-  <!-- Step 1: Choose Destination View -->
+  <!-- Step 1: Choose Destination & Credit Card Payment -->
   <div id="rider-destination-view" class="app-section">
     <button class="back-btn" onclick="switchView('landing-view')" ontouchstart="switchView('landing-view')">← Back</button>
     <div class="card">
       <h3>Where are you heading?</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 20px;">Nassau & Paradise Island Transit</p>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Nassau & Paradise Island Transit</p>
       
       <label>Pickup Location</label>
-      <input type="text" id="pickup-loc" placeholder="e.g., Lynden Pindling International Airport" value="Nassau (Current Location)">
+      <input type="text" id="pickup-loc" value="Nassau (Current Location)">
 
       <label>Destination</label>
-      <input type="text" id="dest-loc" placeholder="e.g., Atlantis, Paradise Island">
+      <input type="text" id="dest-loc" placeholder="e.g., Atlantis, Paradise Island" oninput="calculateRealtimeFareEstimate()">
+
+      <!-- Realtime Fare Estimate Box -->
+      <div id="fare-estimate-box" style="background: #1a2233; padding: 12px; border-radius: 8px; border: 1px dashed #c5a059; margin-bottom: 15px; display: none;">
+        <p style="margin: 0; font-size: 13px; color: #c5a059; font-weight: bold;">⚡ Real-Time Estimated Fare:</p>
+        <p id="estimated-fare-text" style="margin: 4px 0 0 0; font-size: 16px; color: #ffffff; font-weight: bold;">$0.00</p>
+        <p style="margin: 4px 0 0 0; font-size: 11px; color: #a0aec0;">Calculated via live distance & traffic metrics in Nassau.</p>
+      </div>
+
+      <h4 style="color: #c5a059; margin: 15px 0 8px 0; font-size: 14px;">Cashless Payment (Credit Card)</h4>
+      <label>Card Number</label>
+      <input type="text" id="cc-num" value="4242 •••• •••• 4242">
+      
+      <div style="display: flex; gap: 10px;">
+        <div>
+          <label>Exp Date</label>
+          <input type="text" id="cc-exp" value="12/28">
+        </div>
+        <div>
+          <label>CVV</label>
+          <input type="text" id="cc-cvv" value="888">
+        </div>
+      </div>
 
       <button class="action-btn" onclick="proceedToRideSelection()">Continue to Ride Selection</button>
     </div>
@@ -212,18 +219,19 @@
     <button class="back-btn" onclick="switchView('rider-destination-view')" ontouchstart="switchView('rider-destination-view')">← Back</button>
     <div class="card">
       <h3>Select Vehicle Tier</h3>
-      <p id="dest-display" style="color: #c5a059; font-size: 14px; margin-bottom: 15px; font-weight: bold;"></p>
+      <p id="dest-display" style="color: #c5a059; font-size: 14px; margin-bottom: 5px; font-weight: bold;"></p>
+      <p id="tier-fare-summary" style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;"></p>
 
-      <div class="tier-option" onclick="selectTier(this, 'Economy', '$15.00')">
-        <strong>RideFlow Economy</strong>
-        <p style="margin: 4px 0 0 0; font-size: 13px; color: #a0aec0;">Standard compact vehicle • $15.00</p>
+      <div class="tier-option" onclick="selectTier(this, 'Economy', dynamicEconomyPrice)">
+        <strong id="eco-label">RideFlow Economy</strong>
+        <p id="eco-desc" style="margin: 4px 0 0 0; font-size: 13px; color: #a0aec0;">Standard compact vehicle</p>
       </div>
-      <div class="tier-option" onclick="selectTier(this, 'Comfort', '$21.00')" style="margin-top: 10px;">
-        <strong>RideFlow Comfort</strong>
-        <p style="margin: 4px 0 0 0; font-size: 13px; color: #a0aec0;">Mid-size sedan with AC • $21.00</p>
+      <div class="tier-option" onclick="selectTier(this, 'Comfort', dynamicComfortPrice)" style="margin-top: 10px;">
+        <strong id="comf-label">RideFlow Comfort</strong>
+        <p id="comf-desc" style="margin: 4px 0 0 0; font-size: 13px; color: #a0aec0;">Mid-size sedan with AC</p>
       </div>
 
-      <button class="action-btn" onclick="confirmRideRequest()">Confirm Ride Request</button>
+      <button class="action-btn" onclick="confirmRideRequest()">Confirm & Pay Cashless</button>
     </div>
   </div>
 
@@ -231,15 +239,10 @@
   <div id="rider-tracking-view" class="app-section">
     <div class="card">
       <h3 style="color: #48bb78; margin-top: 0;">Driver Assigned!</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Your driver is en route to your pickup location.</p>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Your driver is en route. Payment secured via card.</p>
       
-      <!-- Live Map Simulation -->
-      <div class="map-simulation">
-        <div class="map-grid"></div>
-        <div class="car-marker">🚗 Driver En Route (2 mins away)</div>
-      </div>
+      <div id="map"></div>
 
-      <!-- Driver & Vehicle Credentials -->
       <div style="background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid rgba(197, 160, 89, 0.4); margin-bottom: 15px;">
         <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Driver:</strong> Marcus Miller</p>
         <p style="margin: 0 0 8px 0; font-size: 13px; color: #a0aec0;"><strong>License ID:</strong> BS-849201</p>
@@ -248,7 +251,33 @@
         <p style="margin: 0; font-size: 14px; color: #c5a059; font-weight: bold;">License Plate: E-12948</p>
       </div>
 
-      <button class="action-btn" style="background: #e53e3e; color: #ffffff;" onclick="cancelRide()">Cancel Ride</button>
+      <button class="action-btn" style="background: #3182ce; color: #ffffff; margin-bottom: 10px;" onclick="simulateRideCompletion()">Simulate Ride Arrived / Complete</button>
+      <button class="action-btn" style="background: #e53e3e; color: #ffffff;" onclick="cancelRide()">Cancel Ride ($9.00 Fee)</button>
+    </div>
+  </div>
+
+  <!-- Step 4: Post-Ride Rating & Lost Item Support View -->
+  <div id="rider-feedback-view" class="app-section">
+    <div class="card" style="text-align: center;">
+      <h3 style="color: #c5a059; margin-top: 0;">Trip Completed</h3>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Please rate your driver, Marcus Miller.</p>
+      
+      <div id="star-container" style="margin-bottom: 20px;">
+        <span class="star" onclick="setRating(1)">★</span>
+        <span class="star" onclick="setRating(2)">★</span>
+        <span class="star" onclick="setRating(3)">★</span>
+        <span class="star" onclick="setRating(4)">★</span>
+        <span class="star" onclick="setRating(5)">★</span>
+      </div>
+
+      <div style="text-align: left; background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid rgba(197, 160, 89, 0.3); margin-bottom: 15px;">
+        <label style="color: #c5a059;">Left Something in the Vehicle?</label>
+        <p style="font-size: 12px; color: #a0aec0; margin-top: 0;">Describe what you left behind to text admin support.</p>
+        <textarea id="lost-item-desc" rows="2" placeholder="e.g., Black leather wallet..."></textarea>
+        <button class="action-btn" style="background: #2b6cb0; padding: 10px; font-size: 13px; margin-top: 5px;" onclick="reportLostItem()">Text Admin About Lost Item</button>
+      </div>
+
+      <button class="action-btn" onclick="submitRatingAndFinish()">Submit Rating & Finish</button>
     </div>
   </div>
 
@@ -256,8 +285,8 @@
   <div id="driver-view" class="app-section">
     <button class="back-btn" onclick="switchView('landing-view')" ontouchstart="switchView('landing-view')">← Back</button>
     <div class="card">
-      <h3>Driver Compliance & Verification</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Upload your credentials to activate your account.</p>
+      <h3>Driver Compliance & Registration</h3>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Upload your credentials, select your payout preference, and complete the $50.00 registration fee.</p>
       
       <label>Road Traffic Department License</label>
       <div class="upload-box" onclick="document.getElementById('license-file').click()">
@@ -287,33 +316,127 @@
         <p id="police-status" style="margin: 3px 0 0 0; font-size: 11px; color: #a0aec0;">No file chosen</p>
       </div>
 
-      <button class="action-btn" onclick="submitCredentials()">Submit for Verification</button>
+      <hr style="border: 0; border-top: 1px solid rgba(197, 160, 89, 0.3); margin: 20px 0;">
+
+      <!-- Weekly Payout Option Selection -->
+      <label style="color: #c5a059; font-size: 14px;">Weekly Payout Method</label>
+      <select id="payout-method">
+        <option value="Sun Cash">Sun Cash Wallet</option>
+        <option value="Sand Dollar">Sand Dollar (Central Bank Digital Currency)</option>
+        <option value="Bank Transfer">Direct Bank Transfer</option>
+      </select>
+      
+      <label>Account / Wallet Identifier Details</label>
+      <input type="text" id="payout-details" placeholder="Enter phone #, wallet ID, or bank account #">
+
+      <!-- Registration Fee Payment Section -->
+      <div style="background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid #c5a059; margin-top: 15px; margin-bottom: 15px;">
+        <p style="margin: 0 0 8px 0; font-size: 14px; color: #c5a059; font-weight: bold;">💳 One-Time Driver Registration Fee: $50.00</p>
+        <label>Driver Registration Card Number</label>
+        <input type="text" id="driver-cc-num" value="4242 •••• •••• 4242">
+        
+        <div style="display: flex; gap: 10px;">
+          <div>
+            <label>Exp Date</label>
+            <input type="text" id="driver-cc-exp" value="12/28">
+          </div>
+          <div>
+            <label>CVV</label>
+            <input type="text" id="driver-cc-cvv" value="888">
+          </div>
+        </div>
+      </div>
+
+      <button class="action-btn" onclick="submitCredentials()">Pay $50 Fee & Submit Application</button>
     </div>
   </div>
 
   <script>
     let selectedVehicleTier = null;
     let currentDestination = '';
+    let dynamicEconomyPrice = "$15.00";
+    let dynamicComfortPrice = "$22.00";
+    let map = null;
+    let marker = null;
+    let currentRating = 0;
+    let driverBadReviewsCount = parseInt(localStorage.getItem('driver_bad_reviews') || '0');
 
     function switchView(viewId) {
       document.getElementById('landing-view').style.display = 'none';
       document.getElementById('rider-destination-view').style.display = 'none';
       document.getElementById('rider-tier-view').style.display = 'none';
       document.getElementById('rider-tracking-view').style.display = 'none';
+      document.getElementById('rider-feedback-view').style.display = 'none';
       document.getElementById('driver-view').style.display = 'none';
       
       document.getElementById(viewId).style.display = viewId === 'landing-view' ? 'flex' : 'block';
       window.scrollTo(0, 0);
+
+      if (viewId === 'rider-tracking-view') {
+        setTimeout(initMap, 200);
+      }
+    }
+
+    function initMap() {
+      if (!map) {
+        map = L.map('map').setView([25.0343, -77.3963], 14);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+          attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+          maxZoom: 19
+        }).addTo(map);
+
+        marker = L.marker([25.0383, -77.3900]).addTo(map)
+          .bindPopup('<b>Driver:</b> Marcus Miller<br><b>Car:</b> Toyota Corolla (E-12948)')
+          .openPopup();
+      } else {
+        map.invalidateSize();
+      }
+    }
+
+    // Real-Time Fare Calculator based on character length / destination string simulation
+    function calculateRealtimeFareEstimate() {
+      const dest = document.getElementById('dest-loc').value.trim();
+      const box = document.getElementById('fare-estimate-box');
+      const text = document.getElementById('estimated-fare-text');
+
+      if (dest.length < 3) {
+        box.style.display = 'none';
+        return;
+      }
+
+      let baseFactor = dest.length * 1.4 + 10;
+      if (dest.toLowerCase().includes('atlantis') || dest.toLowerCase().includes('paradise island') || dest.toLowerCase().includes('airport')) {
+        baseFactor += 12; 
+      }
+
+      const ecoVal = Math.max(14, Math.round(baseFactor));
+      const comfVal = Math.round(ecoVal * 1.4);
+
+      dynamicEconomyPrice = `$${ecoVal}.00`;
+      dynamicComfortPrice = `$${comfVal}.00`;
+
+      box.style.display = 'block';
+      text.innerText = `Economy: ${dynamicEconomyPrice}  |  Comfort: ${dynamicComfortPrice}`;
     }
 
     function proceedToRideSelection() {
       const destInput = document.getElementById('dest-loc').value;
+      const ccNum = document.getElementById('cc-num').value;
       if (!destInput) {
         alert('Please enter a destination.');
         return;
       }
+      if (!ccNum) {
+        alert('Please enter valid credit card details for cashless checkout.');
+        return;
+      }
       currentDestination = destInput;
       document.getElementById('dest-display').innerText = "Heading to: " + currentDestination;
+      document.getElementById('tier-fare-summary').innerText = `Real-time calculated rates applied for this trip.`;
+      
+      document.getElementById('eco-label').innerText = `RideFlow Economy (${dynamicEconomyPrice})`;
+      document.getElementById('comf-label').innerText = `RideFlow Comfort (${dynamicComfortPrice})`;
+      
       switchView('rider-tier-view');
     }
 
@@ -328,11 +451,64 @@
         alert('Please select a vehicle tier.');
         return;
       }
+      alert(`Cashless payment authorized (${selectedVehicleTier.price} for ${selectedVehicleTier.tierName})! Finding your matched driver...`);
       switchView('rider-tracking-view');
     }
 
+    function simulateRideCompletion() {
+      switchView('rider-feedback-view');
+    }
+
+    function setRating(stars) {
+      currentRating = stars;
+      const starElements = document.querySelectorAll('.star');
+      starElements.forEach((el, index) => {
+        if (index < stars) {
+          el.classList.add('active');
+        } else {
+          el.classList.remove('active');
+        }
+      });
+    }
+
+    function reportLostItem() {
+      const itemDesc = document.getElementById('lost-item-desc').value;
+      if (!itemDesc) {
+        alert('Please describe the item you left behind.');
+        return;
+      }
+      alert(`[SMS Dispatched to Administrator]: Lost item reported for vehicle E-12948 (Marcus Miller). Item: "${itemDesc}". Admin will contact driver immediately.`);
+      document.getElementById('lost-item-desc').value = '';
+    }
+
+    function submitRatingAndFinish() {
+      if (currentRating === 0) {
+        alert('Please select a star rating for your driver.');
+        return;
+      }
+
+      if (currentRating <= 2) {
+        driverBadReviewsCount++;
+        localStorage.setItem('driver_bad_reviews', driverBadReviewsCount);
+      }
+
+      let warningMsg = `Thank you for rating! Rating submitted successfully (${currentRating}/5 stars).`;
+      
+      if (driverBadReviewsCount >= 5) {
+        warningMsg += `\n\n⚠️ AUTOMATED POLICY ALERT: Driver Marcus Miller has accumulated ${driverBadReviewsCount} bad reviews and is now PERMANENTLY BANNED from RideFlow Bahamas.`;
+      } else {
+        warningMsg += `\n(Driver currently has ${driverBadReviewsCount}/5 bad reviews toward a ban threshold).`;
+      }
+
+      alert(warningMsg);
+      currentRating = 0;
+      setRating(0);
+      switchView('landing-view');
+    }
+
     function cancelRide() {
-      if (confirm('Are you sure you want to cancel this ride?')) {
+      if (confirm('Cancel Ride Warning: A $9.00 cancellation fee will be charged to your card on file since your driver is already en route. Do you wish to proceed?')) {
+        alert('Ride canceled. A $9.00 cancellation fee has been applied to your credit card.');
         switchView('landing-view');
       }
     }
@@ -347,7 +523,20 @@
     }
 
     function submitCredentials() {
-      alert('Compliance documents submitted successfully! Road Traffic Department status pending verification.');
+      const method = document.getElementById('payout-method').value;
+      const details = document.getElementById('payout-details').value;
+      const driverCc = document.getElementById('driver-cc-num').value;
+
+      if (!details) {
+        alert('Please provide your payout account identifier or number.');
+        return;
+      }
+      if (!driverCc) {
+        alert('Please enter payment details for the $50.00 registration fee.');
+        return;
+      }
+      
+      alert(`$50.00 registration fee successfully charged! Compliance documents submitted. Weekly payouts set to receive via ${method}. Status pending verification.`);
       switchView('landing-view');
     }
   </script>
