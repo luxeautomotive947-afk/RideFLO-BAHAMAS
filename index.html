@@ -97,7 +97,7 @@
       margin-bottom: 6px;
       font-weight: bold;
     }
-    input, select {
+    input {
       width: 100%;
       padding: 12px;
       background: #1a2233;
@@ -134,12 +134,47 @@
     }
     .upload-box {
       border: 2px dashed rgba(197, 160, 89, 0.5);
-      padding: 15px;
+      padding: 12px;
       text-align: center;
       border-radius: 8px;
       background: #1a2233;
       margin-bottom: 15px;
       cursor: pointer;
+    }
+    .map-simulation {
+      background: #090d16;
+      border: 1px solid rgba(197, 160, 89, 0.4);
+      height: 180px;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 15px;
+    }
+    .map-grid {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-image: radial-gradient(rgba(197, 160, 89, 0.2) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    .car-marker {
+      background: #c5a059;
+      color: #090d16;
+      padding: 6px 12px;
+      font-weight: bold;
+      border-radius: 20px;
+      font-size: 12px;
+      box-shadow: 0 0 15px rgba(197, 160, 89, 0.8);
+      z-index: 2;
+      animation: pulseCar 2s infinite;
+    }
+    @keyframes pulseCar {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+      100% { transform: scale(1); }
     }
   </style>
 </head>
@@ -150,16 +185,17 @@
     <h1>RideFlow Bahamas</h1>
     <p>Select your experience to get started</p>
     <div class="btn-main-group">
-      <button class="btn-ride-main" onclick="switchView('rider-view')" ontouchstart="switchView('rider-view')">Request Ride</button>
+      <button class="btn-ride-main" onclick="switchView('rider-destination-view')" ontouchstart="switchView('rider-destination-view')">Request Ride</button>
       <button class="btn-driver-main" onclick="switchView('driver-view')" ontouchstart="switchView('driver-view')">Become a Driver</button>
     </div>
   </div>
 
-  <!-- Rider Section View -->
-  <div id="rider-view" class="app-section">
+  <!-- Step 1: Choose Destination View -->
+  <div id="rider-destination-view" class="app-section">
     <button class="back-btn" onclick="switchView('landing-view')" ontouchstart="switchView('landing-view')">← Back</button>
     <div class="card">
-      <h3>Request a Ride (Nassau / Paradise Island)</h3>
+      <h3>Where are you heading?</h3>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 20px;">Nassau & Paradise Island Transit</p>
       
       <label>Pickup Location</label>
       <input type="text" id="pickup-loc" placeholder="e.g., Lynden Pindling International Airport" value="Nassau (Current Location)">
@@ -167,7 +203,17 @@
       <label>Destination</label>
       <input type="text" id="dest-loc" placeholder="e.g., Atlantis, Paradise Island">
 
-      <label>Select Vehicle Tier</label>
+      <button class="action-btn" onclick="proceedToRideSelection()">Continue to Ride Selection</button>
+    </div>
+  </div>
+
+  <!-- Step 2: Choose Ride Tier View -->
+  <div id="rider-tier-view" class="app-section">
+    <button class="back-btn" onclick="switchView('rider-destination-view')" ontouchstart="switchView('rider-destination-view')">← Back</button>
+    <div class="card">
+      <h3>Select Vehicle Tier</h3>
+      <p id="dest-display" style="color: #c5a059; font-size: 14px; margin-bottom: 15px; font-weight: bold;"></p>
+
       <div class="tier-option" onclick="selectTier(this, 'Economy', '$15.00')">
         <strong>RideFlow Economy</strong>
         <p style="margin: 4px 0 0 0; font-size: 13px; color: #a0aec0;">Standard compact vehicle • $15.00</p>
@@ -177,7 +223,32 @@
         <p style="margin: 4px 0 0 0; font-size: 13px; color: #a0aec0;">Mid-size sedan with AC • $21.00</p>
       </div>
 
-      <button class="action-btn" onclick="requestRideAction()">Confirm Ride Request</button>
+      <button class="action-btn" onclick="confirmRideRequest()">Confirm Ride Request</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Live Tracking & Driver Details View -->
+  <div id="rider-tracking-view" class="app-section">
+    <div class="card">
+      <h3 style="color: #48bb78; margin-top: 0;">Driver Assigned!</h3>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Your driver is en route to your pickup location.</p>
+      
+      <!-- Live Map Simulation -->
+      <div class="map-simulation">
+        <div class="map-grid"></div>
+        <div class="car-marker">🚗 Driver En Route (2 mins away)</div>
+      </div>
+
+      <!-- Driver & Vehicle Credentials -->
+      <div style="background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid rgba(197, 160, 89, 0.4); margin-bottom: 15px;">
+        <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Driver:</strong> Marcus Miller</p>
+        <p style="margin: 0 0 8px 0; font-size: 13px; color: #a0aec0;"><strong>License ID:</strong> BS-849201</p>
+        <hr style="border: 0; border-top: 1px solid rgba(197, 160, 89, 0.2); margin: 10px 0;">
+        <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Vehicle:</strong> Toyota Corolla (Silver)</p>
+        <p style="margin: 0; font-size: 14px; color: #c5a059; font-weight: bold;">License Plate: E-12948</p>
+      </div>
+
+      <button class="action-btn" style="background: #e53e3e; color: #ffffff;" onclick="cancelRide()">Cancel Ride</button>
     </div>
   </div>
 
@@ -186,20 +257,34 @@
     <button class="back-btn" onclick="switchView('landing-view')" ontouchstart="switchView('landing-view')">← Back</button>
     <div class="card">
       <h3>Driver Compliance & Verification</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 20px;">Upload your Bahamian commercial driving credentials and vehicle inspection records to activate your account.</p>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Upload your credentials to activate your account.</p>
       
       <label>Road Traffic Department License</label>
       <div class="upload-box" onclick="document.getElementById('license-file').click()">
-        <span style="color: #c5a059; font-weight: bold; font-size: 14px;">📁 Tap to Upload Driver's License</span>
+        <span style="color: #c5a059; font-weight: bold; font-size: 13px;">📁 Upload Driver's License</span>
         <input type="file" id="license-file" style="display:none;" onchange="updateFileName('license-file', 'license-status')">
-        <p id="license-status" style="margin: 5px 0 0 0; font-size: 12px; color: #a0aec0;">No file chosen</p>
+        <p id="license-status" style="margin: 3px 0 0 0; font-size: 11px; color: #a0aec0;">No file chosen</p>
       </div>
 
       <label>Vehicle Inspection Certificate</label>
       <div class="upload-box" onclick="document.getElementById('inspection-file').click()">
-        <span style="color: #c5a059; font-weight: bold; font-size: 14px;">📁 Tap to Upload Inspection Record</span>
+        <span style="color: #c5a059; font-weight: bold; font-size: 13px;">📁 Upload Inspection Record</span>
         <input type="file" id="inspection-file" style="display:none;" onchange="updateFileName('inspection-file', 'inspection-status')">
-        <p id="inspection-status" style="margin: 5px 0 0 0; font-size: 12px; color: #a0aec0;">No file chosen</p>
+        <p id="inspection-status" style="margin: 3px 0 0 0; font-size: 11px; color: #a0aec0;">No file chosen</p>
+      </div>
+
+      <label>Vehicle Insurance Certificate</label>
+      <div class="upload-box" onclick="document.getElementById('insurance-file').click()">
+        <span style="color: #c5a059; font-weight: bold; font-size: 13px;">📁 Upload Insurance Document</span>
+        <input type="file" id="insurance-file" style="display:none;" onchange="updateFileName('insurance-file', 'insurance-status')">
+        <p id="insurance-status" style="margin: 3px 0 0 0; font-size: 11px; color: #a0aec0;">No file chosen</p>
+      </div>
+
+      <label>Police Character Record (Certificate)</label>
+      <div class="upload-box" onclick="document.getElementById('police-file').click()">
+        <span style="color: #c5a059; font-weight: bold; font-size: 13px;">📁 Upload Police Record</span>
+        <input type="file" id="police-file" style="display:none;" onchange="updateFileName('police-file', 'police-status')">
+        <p id="police-status" style="margin: 3px 0 0 0; font-size: 11px; color: #a0aec0;">No file chosen</p>
       </div>
 
       <button class="action-btn" onclick="submitCredentials()">Submit for Verification</button>
@@ -208,14 +293,28 @@
 
   <script>
     let selectedVehicleTier = null;
+    let currentDestination = '';
 
     function switchView(viewId) {
       document.getElementById('landing-view').style.display = 'none';
-      document.getElementById('rider-view').style.display = 'none';
+      document.getElementById('rider-destination-view').style.display = 'none';
+      document.getElementById('rider-tier-view').style.display = 'none';
+      document.getElementById('rider-tracking-view').style.display = 'none';
       document.getElementById('driver-view').style.display = 'none';
       
       document.getElementById(viewId).style.display = viewId === 'landing-view' ? 'flex' : 'block';
       window.scrollTo(0, 0);
+    }
+
+    function proceedToRideSelection() {
+      const destInput = document.getElementById('dest-loc').value;
+      if (!destInput) {
+        alert('Please enter a destination.');
+        return;
+      }
+      currentDestination = destInput;
+      document.getElementById('dest-display').innerText = "Heading to: " + currentDestination;
+      switchView('rider-tier-view');
     }
 
     function selectTier(element, tierName, price) {
@@ -224,17 +323,18 @@
       selectedVehicleTier = { tierName, price };
     }
 
-    function requestRideAction() {
-      const destination = document.getElementById('dest-loc').value;
-      if (!destination) {
-        alert('Please enter a destination.');
-        return;
-      }
+    function confirmRideRequest() {
       if (!selectedVehicleTier) {
         alert('Please select a vehicle tier.');
         return;
       }
-      alert(`Ride Requested successfully to ${destination} (${selectedVehicleTier.tierName} - ${selectedVehicleTier.price})! Finding your driver...`);
+      switchView('rider-tracking-view');
+    }
+
+    function cancelRide() {
+      if (confirm('Are you sure you want to cancel this ride?')) {
+        switchView('landing-view');
+      }
     }
 
     function updateFileName(inputId, statusId) {
