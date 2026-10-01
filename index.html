@@ -5,23 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RideFlow Bahamas</title>
   <style>
+    html {
+      scroll-behavior: smooth;
+    }
     body {
-      background-image: linear-gradient(rgba(9, 13, 22, 0.85), rgba(9, 13, 22, 0.92)), url('https://images.unsplash.com/photo-1548574505-5eef39c05b4a?q=80&w=1600&auto=format&fit=crop');
+      background: linear-gradient(rgba(9, 13, 22, 0.8), rgba(9, 13, 22, 0.95)), 
+                  url('https://images.unsplash.com/photo-1582967788606-a171c1080cb0?q=80&w=1200&auto=format&fit=crop') no-repeat center center fixed;
       background-size: cover;
-      background-position: center;
-      background-attachment: fixed;
       color: #ffffff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       margin: 0;
       padding: 0;
-      scroll-behavior: smooth;
     }
     .landing-selector {
       text-align: center;
       padding: 30px 20px;
-      background: rgba(9, 13, 22, 0.85);
+      background: rgba(9, 13, 22, 0.95);
       border-bottom: 2px solid #c5a059;
-      backdrop-filter: blur(5px);
+      backdrop-filter: blur(8px);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
     }
     .landing-selector h2 {
       color: #ffffff;
@@ -43,9 +47,8 @@
       font-weight: bold;
       border-radius: 8px;
       font-size: 16px;
-      cursor: pointer;
+      display: inline-block;
       box-shadow: 0 4px 10px rgba(197, 160, 89, 0.3);
-      border: none;
     }
     .btn-driver {
       background: transparent;
@@ -56,10 +59,10 @@
       font-weight: bold;
       border-radius: 8px;
       font-size: 16px;
-      cursor: pointer;
+      display: inline-block;
     }
     .section-container {
-      padding: 20px;
+      padding: 40px 20px;
       max-width: 600px;
       margin: 0 auto;
     }
@@ -68,8 +71,9 @@
       border: 1px solid #c5a059;
       border-radius: 12px;
       padding: 20px;
-      margin-bottom: 30px;
-      backdrop-filter: blur(5px);
+      margin-bottom: 50px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     }
   </style>
 </head>
@@ -79,8 +83,8 @@
   <div class="landing-selector">
     <h2>RideFlow Bahamas</h2>
     <div class="btn-container">
-      <button class="btn-ride" onclick="scrollToSection('rider-section')">Request Ride</button>
-      <button class="btn-driver" onclick="scrollToSection('driver-section')">Become a Driver</button>
+      <a href="#rider-section" class="btn-ride">Request Ride</a>
+      <a href="#driver-section" class="btn-driver">Become a Driver</a>
     </div>
   </div>
 
@@ -89,11 +93,11 @@
     <div id="rider-section" class="card">
       <h3>Choose a Ride Tier (Nassau / Paradise Island)</h3>
       <p style="color: #a0aec0; font-size: 14px;">Select your luxury vehicle class for island transit.</p>
-      <div style="background: rgba(26, 34, 51, 0.9); padding: 12px; border-radius: 8px; margin-top: 10px;">
+      <div style="background: rgba(26, 34, 51, 0.95); padding: 12px; border-radius: 8px; margin-top: 10px; border: 1px solid rgba(197, 160, 89, 0.3);">
         <strong>RideFlow Economy</strong>
         <p style="margin: 5px 0 0 0; font-size: 13px; color: #a0aec0;">Standard compact vehicle • $15.00</p>
       </div>
-      <div style="background: rgba(26, 34, 51, 0.9); padding: 12px; border-radius: 8px; margin-top: 10px;">
+      <div style="background: rgba(26, 34, 51, 0.95); padding: 12px; border-radius: 8px; margin-top: 10px; border: 1px solid rgba(197, 160, 89, 0.3);">
         <strong>RideFlow Comfort</strong>
         <p style="margin: 5px 0 0 0; font-size: 13px; color: #a0aec0;">Mid-size sedan with AC • $21.00</p>
       </div>
@@ -106,15 +110,6 @@
       <p style="color: #48bb78; font-size: 14px; font-weight: bold;">✓ Road Traffic Department Status: Verified</p>
     </div>
   </div>
-
-  <script>
-    function scrollToSection(id) {
-      const element = document.getElementById(id);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }
-  </script>
 
 </body>
 </html>
