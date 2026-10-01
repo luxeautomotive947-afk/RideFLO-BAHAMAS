@@ -1,35 +1,177 @@
-document.addEventListener("DOMContentLoaded", function () {
-  // 1. Parse the URL parameters (e.g., ?view=rider or ?view=driver)
-  const urlParams = new URLSearchParams(window.location.search);
-  const viewMode = urlParams.get('view');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RideFlow Bahamas - Dispatch</title>
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --card-bg: #121929;
+            --gold-primary: #d4af37;
+            --gold-light: #f3e5ab;
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
+            --accent-green: #10b981;
+        }
 
-  // 2. Select your container elements (update these IDs to match your HTML elements)
-  const riderSection = document.getElementById('rider-section');
-  const driverSection = document.getElementById('driver-section');
-  const payoutsSection = document.getElementById('payouts-section');
-  const topNavTabs = document.getElementById('top-nav-tabs'); // Optional: top navigation bar containing the tabs
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
 
-  // 3. Enforce strict role and interface isolation
-  if (viewMode === 'rider') {
-    // RIDER APP VIEW: Show only rider booking, hide all driver/compliance/payout panels
-    if (riderSection) riderSection.style.display = 'block';
-    if (driverSection) driverSection.style.display = 'none';
-    if (payoutsSection) payoutsSection.style.display = 'none';
-    if (topNavTabs) topNavTabs.style.display = 'none'; // Hides the tab switcher completely
-    
-    console.log("RideFlow Security: Loaded in secure RIDER mode.");
+        .app-header {
+            background-color: var(--card-bg);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-  } else if (viewMode === 'driver') {
-    // DRIVER APP VIEW: Show driver compliance and payouts, hide rider booking
-    if (riderSection) riderSection.style.display = 'none';
-    if (driverSection) driverSection.style.display = 'block';
-    if (payoutsSection) payoutsSection.style.display = 'block';
-    if (topNavTabs) topNavTabs.style.display = 'none'; // Hides the tab switcher completely
-    
-    console.log("RideFlow Security: Loaded in secure DRIVER mode.");
+        .brand-title {
+            color: var(--gold-primary);
+            font-size: 18px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
 
-  } else {
-    // DEFAULT/ADMIN VIEW: If no view parameter is specified, show everything (for local testing or web admin)
-    console.log("RideFlow Security: Loaded in default/admin mode.");
-  }
-});
+        .container {
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        h2 {
+            color: var(--gold-light);
+            font-size: 20px;
+            margin-top: 0;
+        }
+
+        p {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #d4af37 0%, #aa8c2c 100%);
+            color: #000;
+            border: none;
+            padding: 12px 20px;
+            font-weight: bold;
+            border-radius: 8px;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        /* Hidden by default until JS evaluates view permissions */
+        .portal-section {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-header">
+        <div class="brand-title">RIDEFLOW BAHAMAS</div>
+        <div id="user-role-badge" style="font-size: 12px; color: var(--gold-primary); background: rgba(212,175,55,0.1); padding: 4px 8px; border-radius: 4px;">Loading...</div>
+    </div>
+
+    <div class="container">
+        
+        <!-- RIDER SECTION -->
+        <div id="rider-section" class="portal-section">
+            <div class="card">
+                <h2>Choose a Ride Tier (Nassau / Paradise Island)</h2>
+                <p>Select your luxury vehicle class for island transit.</p>
+                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-top: 10px; border: 1px solid rgba(212,175,55,0.1);">
+                    <strong>RideFlow Economy</strong><br><span style="color: var(--text-muted); font-size: 12px;">Standard compact vehicle • $15.00</span>
+                </div>
+                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-top: 10px; border: 1px solid rgba(212,175,55,0.1);">
+                    <strong>RideFlow Comfort</strong><br><span style="color: var(--text-muted); font-size: 12px;">Mid-size sedan with AC • $21.00</span>
+                </div>
+                <button class="btn">Request Ride Now</button>
+            </div>
+        </div>
+
+        <!-- DRIVER COMPLIANCE SECTION -->
+        <div id="driver-section" class="portal-section">
+            <div class="card">
+                <h2>Driver Compliance & Verification</h2>
+                <p>Manage your Bahamian commercial driving credentials and vehicle inspection records.</p>
+                <div style="color: var(--accent-green); font-size: 13px; margin-bottom: 10px;">✓ Road Traffic Department Status: Verified</div>
+                <button class="btn">Update Documentation</button>
+            </div>
+        </div>
+
+        <!-- PAYOUTS SECTION -->
+        <div id="payouts-section" class="portal-section">
+            <div class="card">
+                <h2>Earnings & Payouts</h2>
+                <p>View your completed fares and transfer balance.</p>
+                <div style="font-size: 24px; color: var(--gold-primary); font-weight: bold; margin: 10px 0;">$0.00 BSD</div>
+                <button class="btn">Request Payout</button>
+            </div>
+        </div>
+
+        <!-- DEFAULT ADMIN / FALLBACK SECTION -->
+        <div id="admin-section" class="portal-section">
+            <div class="card">
+                <h2>System Overview</h2>
+                <p>Full administrative dashboard access.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Parse URL parameters (e.g., ?view=rider or ?view=driver)
+            const urlParams = new URLSearchParams(window.location.search);
+            const viewMode = urlParams.get('view');
+
+            const riderSection = document.getElementById('rider-section');
+            const driverSection = document.getElementById('driver-section');
+            const payoutsSection = document.getElementById('payouts-section');
+            const adminSection = document.getElementById('admin-section');
+            const roleBadge = document.getElementById('user-role-badge');
+
+            if (viewMode === 'rider') {
+                // Secure Rider Mode: Only show rider booking interface
+                if (riderSection) riderSection.style.display = 'block';
+                if (roleBadge) roleBadge.innerText = 'RIDER APP';
+                console.log("RideFlow Security: Initialized secure Rider context.");
+
+            } else if (viewMode === 'driver') {
+                // Secure Driver Mode: Show driver compliance and payouts, hide rider booking
+                if (driverSection) driverSection.style.display = 'block';
+                if (payoutsSection) payoutsSection.style.display = 'block';
+                if (roleBadge) roleBadge.innerText = 'DRIVER APP';
+                console.log("RideFlow Security: Initialized secure Driver context.");
+
+            } else {
+                // Default fallback / Admin view if no param is given
+                if (adminSection) adminSection.style.display = 'block';
+                if (riderSection) riderSection.style.display = 'block';
+                if (driverSection) driverSection.style.display = 'block';
+                if (payoutsSection) payoutsSection.style.display = 'block';
+                if (roleBadge) roleBadge.innerText = 'ADMIN / WEB';
+                console.log("RideFlow Security: Initialized full default view.");
+            }
+        });
+    </script>
+</body>
+</html>
