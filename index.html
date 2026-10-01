@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>RideFlow Bahamas</title>
   <style>
     html {
       scroll-behavior: smooth;
     }
     body {
-      background: linear-gradient(rgba(9, 13, 22, 0.8), rgba(9, 13, 22, 0.95)), 
+      background: linear-gradient(rgba(9, 13, 22, 0.85), rgba(9, 13, 22, 0.95)), 
                   url('https://images.unsplash.com/photo-1582967788606-a171c1080cb0?q=80&w=1200&auto=format&fit=crop') no-repeat center center fixed;
       background-size: cover;
       color: #ffffff;
@@ -19,60 +19,59 @@
     }
     .landing-selector {
       text-align: center;
-      padding: 30px 20px;
-      background: rgba(9, 13, 22, 0.95);
+      padding: 25px 20px;
+      background: #090d16;
       border-bottom: 2px solid #c5a059;
-      backdrop-filter: blur(8px);
       position: sticky;
       top: 0;
-      z-index: 1000;
+      z-index: 9999;
     }
     .landing-selector h2 {
       color: #ffffff;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
       letter-spacing: 1px;
-      font-size: 22px;
+      font-size: 20px;
     }
     .btn-container {
       display: flex;
-      gap: 15px;
+      gap: 12px;
       justify-content: center;
-      flex-wrap: wrap;
     }
     .btn-ride {
       background: #c5a059;
       color: #090d16;
-      padding: 14px 28px;
+      padding: 12px 24px;
       font-weight: bold;
       border-radius: 8px;
-      font-size: 16px;
+      font-size: 15px;
       cursor: pointer;
       border: none;
       box-shadow: 0 4px 10px rgba(197, 160, 89, 0.3);
+      -webkit-tap-highlight-color: transparent;
     }
     .btn-driver {
       background: transparent;
       color: #c5a059;
       border: 2px solid #c5a059;
-      padding: 12px 26px;
+      padding: 12px 24px;
       font-weight: bold;
       border-radius: 8px;
-      font-size: 16px;
+      font-size: 15px;
       cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
     }
     .section-container {
-      padding: 40px 20px;
+      padding: 30px 20px;
       max-width: 600px;
       margin: 0 auto;
     }
     .card {
-      background: rgba(18, 24, 36, 0.88);
+      background: #121824;
       border: 1px solid #c5a059;
       border-radius: 12px;
       padding: 20px;
-      margin-bottom: 50px;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      margin-bottom: 40px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     }
   </style>
 </head>
@@ -82,8 +81,8 @@
   <div class="landing-selector">
     <h2>RideFlow Bahamas</h2>
     <div class="btn-container">
-      <button class="btn-ride" onclick="scrollToCard('rider-section')">Request Ride</button>
-      <button class="btn-driver" onclick="scrollToCard('driver-section')">Become a Driver</button>
+      <button class="btn-ride" onclick="scrollToCard('rider-section')" ontouchstart="scrollToCard('rider-section')">Request Ride</button>
+      <button class="btn-driver" onclick="scrollToCard('driver-section')" ontouchstart="scrollToCard('driver-section')">Become a Driver</button>
     </div>
   </div>
 
@@ -92,11 +91,11 @@
     <div id="rider-section" class="card">
       <h3>Choose a Ride Tier (Nassau / Paradise Island)</h3>
       <p style="color: #a0aec0; font-size: 14px;">Select your luxury vehicle class for island transit.</p>
-      <div style="background: rgba(26, 34, 51, 0.95); padding: 12px; border-radius: 8px; margin-top: 10px; border: 1px solid rgba(197, 160, 89, 0.3);">
+      <div style="background: #1a2233; padding: 12px; border-radius: 8px; margin-top: 10px; border: 1px solid rgba(197, 160, 89, 0.3);">
         <strong>RideFlow Economy</strong>
         <p style="margin: 5px 0 0 0; font-size: 13px; color: #a0aec0;">Standard compact vehicle • $15.00</p>
       </div>
-      <div style="background: rgba(26, 34, 51, 0.95); padding: 12px; border-radius: 8px; margin-top: 10px; border: 1px solid rgba(197, 160, 89, 0.3);">
+      <div style="background: #1a2233; padding: 12px; border-radius: 8px; margin-top: 10px; border: 1px solid rgba(197, 160, 89, 0.3);">
         <strong>RideFlow Comfort</strong>
         <p style="margin: 5px 0 0 0; font-size: 13px; color: #a0aec0;">Mid-size sedan with AC • $21.00</p>
       </div>
