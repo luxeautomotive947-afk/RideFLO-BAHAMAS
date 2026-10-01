@@ -70,6 +70,7 @@
       max-width: 600px;
       margin: 0 auto;
       min-height: 100vh;
+      box-sizing: border-box;
     }
     .card {
       background: #121824;
@@ -87,6 +88,57 @@
       border-radius: 6px;
       font-weight: bold;
       margin-bottom: 20px;
+      cursor: pointer;
+    }
+    label {
+      display: block;
+      color: #a0aec0;
+      font-size: 13px;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      background: #1a2233;
+      border: 1px solid rgba(197, 160, 89, 0.4);
+      color: #ffffff;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 15px;
+      box-sizing: border-box;
+    }
+    .tier-option {
+      background: #1a2233;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 10px;
+      border: 1px solid rgba(197, 160, 89, 0.3);
+      cursor: pointer;
+    }
+    .tier-option.selected {
+      border-color: #c5a059;
+      background: #222d44;
+    }
+    .action-btn {
+      background: #c5a059;
+      color: #090d16;
+      width: 100%;
+      padding: 14px;
+      font-weight: bold;
+      border-radius: 8px;
+      font-size: 15px;
+      border: none;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .upload-box {
+      border: 2px dashed rgba(197, 160, 89, 0.5);
+      padding: 15px;
+      text-align: center;
+      border-radius: 8px;
+      background: #1a2233;
+      margin-bottom: 15px;
       cursor: pointer;
     }
   </style>
@@ -107,16 +159,25 @@
   <div id="rider-view" class="app-section">
     <button class="back-btn" onclick="switchView('landing-view')" ontouchstart="switchView('landing-view')">← Back</button>
     <div class="card">
-      <h3>Choose a Ride Tier (Nassau / Paradise Island)</h3>
-      <p style="color: #a0aec0; font-size: 14px;">Select your luxury vehicle class for island transit.</p>
-      <div style="background: #1a2233; padding: 12px; border-radius: 8px; margin-top: 10px; border: 1px solid rgba(197, 160, 89, 0.3);">
+      <h3>Request a Ride (Nassau / Paradise Island)</h3>
+      
+      <label>Pickup Location</label>
+      <input type="text" id="pickup-loc" placeholder="e.g., Lynden Pindling International Airport" value="Nassau (Current Location)">
+
+      <label>Destination</label>
+      <input type="text" id="dest-loc" placeholder="e.g., Atlantis, Paradise Island">
+
+      <label>Select Vehicle Tier</label>
+      <div class="tier-option" onclick="selectTier(this, 'Economy', '$15.00')">
         <strong>RideFlow Economy</strong>
-        <p style="margin: 5px 0 0 0; font-size: 13px; color: #a0aec0;">Standard compact vehicle • $15.00</p>
+        <p style="margin: 4px 0 0 0; font-size: 13px; color: #a0aec0;">Standard compact vehicle • $15.00</p>
       </div>
-      <div style="background: #1a2233; padding: 12px; border-radius: 8px; margin-top: 10px; border: 1px solid rgba(197, 160, 89, 0.3);">
+      <div class="tier-option" onclick="selectTier(this, 'Comfort', '$21.00')" style="margin-top: 10px;">
         <strong>RideFlow Comfort</strong>
-        <p style="margin: 5px 0 0 0; font-size: 13px; color: #a0aec0;">Mid-size sedan with AC • $21.00</p>
+        <p style="margin: 4px 0 0 0; font-size: 13px; color: #a0aec0;">Mid-size sedan with AC • $21.00</p>
       </div>
+
+      <button class="action-btn" onclick="requestRideAction()">Confirm Ride Request</button>
     </div>
   </div>
 
@@ -125,12 +186,29 @@
     <button class="back-btn" onclick="switchView('landing-view')" ontouchstart="switchView('landing-view')">← Back</button>
     <div class="card">
       <h3>Driver Compliance & Verification</h3>
-      <p style="color: #a0aec0; font-size: 14px;">Manage your Bahamian commercial driving credentials and vehicle inspection records.</p>
-      <p style="color: #48bb78; font-size: 14px; font-weight: bold;">✓ Road Traffic Department Status: Verified</p>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 20px;">Upload your Bahamian commercial driving credentials and vehicle inspection records to activate your account.</p>
+      
+      <label>Road Traffic Department License</label>
+      <div class="upload-box" onclick="document.getElementById('license-file').click()">
+        <span style="color: #c5a059; font-weight: bold; font-size: 14px;">📁 Tap to Upload Driver's License</span>
+        <input type="file" id="license-file" style="display:none;" onchange="updateFileName('license-file', 'license-status')">
+        <p id="license-status" style="margin: 5px 0 0 0; font-size: 12px; color: #a0aec0;">No file chosen</p>
+      </div>
+
+      <label>Vehicle Inspection Certificate</label>
+      <div class="upload-box" onclick="document.getElementById('inspection-file').click()">
+        <span style="color: #c5a059; font-weight: bold; font-size: 14px;">📁 Tap to Upload Inspection Record</span>
+        <input type="file" id="inspection-file" style="display:none;" onchange="updateFileName('inspection-file', 'inspection-status')">
+        <p id="inspection-status" style="margin: 5px 0 0 0; font-size: 12px; color: #a0aec0;">No file chosen</p>
+      </div>
+
+      <button class="action-btn" onclick="submitCredentials()">Submit for Verification</button>
     </div>
   </div>
 
   <script>
+    let selectedVehicleTier = null;
+
     function switchView(viewId) {
       document.getElementById('landing-view').style.display = 'none';
       document.getElementById('rider-view').style.display = 'none';
@@ -138,6 +216,39 @@
       
       document.getElementById(viewId).style.display = viewId === 'landing-view' ? 'flex' : 'block';
       window.scrollTo(0, 0);
+    }
+
+    function selectTier(element, tierName, price) {
+      document.querySelectorAll('.tier-option').forEach(el => el.classList.remove('selected'));
+      element.classList.add('selected');
+      selectedVehicleTier = { tierName, price };
+    }
+
+    function requestRideAction() {
+      const destination = document.getElementById('dest-loc').value;
+      if (!destination) {
+        alert('Please enter a destination.');
+        return;
+      }
+      if (!selectedVehicleTier) {
+        alert('Please select a vehicle tier.');
+        return;
+      }
+      alert(`Ride Requested successfully to ${destination} (${selectedVehicleTier.tierName} - ${selectedVehicleTier.price})! Finding your driver...`);
+    }
+
+    function updateFileName(inputId, statusId) {
+      const fileInput = document.getElementById(inputId);
+      const statusText = document.getElementById(statusId);
+      if (fileInput.files.length > 0) {
+        statusText.innerText = "Selected: " + fileInput.files[0].name;
+        statusText.style.color = "#48bb78";
+      }
+    }
+
+    function submitCredentials() {
+      alert('Compliance documents submitted successfully! Road Traffic Department status pending verification.');
+      switchView('landing-view');
     }
   </script>
 
