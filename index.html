@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>RideFlow Bahamas</title>
   <style>
-    html {
-      scroll-behavior: smooth;
-    }
     body {
       background: linear-gradient(rgba(9, 13, 22, 0.85), rgba(9, 13, 22, 0.95)), 
                   url('https://images.unsplash.com/photo-1582967788606-a171c1080cb0?q=80&w=1200&auto=format&fit=crop') no-repeat center center fixed;
@@ -17,78 +14,99 @@
       margin: 0;
       padding: 0;
     }
-    .landing-selector {
-      text-align: center;
-      padding: 25px 20px;
-      background: #090d16;
-      border-bottom: 2px solid #c5a059;
-      position: sticky;
-      top: 0;
-      z-index: 9999;
-    }
-    .landing-selector h2 {
-      color: #ffffff;
-      margin-bottom: 15px;
-      letter-spacing: 1px;
-      font-size: 20px;
-    }
-    .btn-container {
+    .landing-screen {
       display: flex;
-      gap: 12px;
+      flex-direction: column;
+      align-items: center;
       justify-content: center;
+      height: 100vh;
+      text-align: center;
+      padding: 20px;
     }
-    .btn-ride {
+    .landing-screen h1 {
+      color: #ffffff;
+      font-size: 26px;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+    .landing-screen p {
+      color: #a0aec0;
+      font-size: 14px;
+      margin-bottom: 35px;
+    }
+    .btn-main-group {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      width: 100%;
+      max-width: 300px;
+    }
+    .btn-ride-main {
       background: #c5a059;
       color: #090d16;
-      padding: 12px 24px;
+      padding: 16px;
       font-weight: bold;
-      border-radius: 8px;
-      font-size: 15px;
+      border-radius: 10px;
+      font-size: 16px;
       cursor: pointer;
       border: none;
-      box-shadow: 0 4px 10px rgba(197, 160, 89, 0.3);
+      box-shadow: 0 4px 15px rgba(197, 160, 89, 0.4);
       -webkit-tap-highlight-color: transparent;
     }
-    .btn-driver {
+    .btn-driver-main {
       background: transparent;
       color: #c5a059;
       border: 2px solid #c5a059;
-      padding: 12px 24px;
+      padding: 15px;
       font-weight: bold;
-      border-radius: 8px;
-      font-size: 15px;
+      border-radius: 10px;
+      font-size: 16px;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
-    .section-container {
-      padding: 30px 20px;
+    .app-section {
+      display: none;
+      padding: 20px;
       max-width: 600px;
       margin: 0 auto;
+      min-height: 100vh;
     }
     .card {
       background: #121824;
       border: 1px solid #c5a059;
       border-radius: 12px;
       padding: 20px;
-      margin-bottom: 40px;
+      margin-bottom: 20px;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+    .back-btn {
+      background: transparent;
+      color: #c5a059;
+      border: 1px solid #c5a059;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
 
-  <!-- Top Selector Header -->
-  <div class="landing-selector">
-    <h2>RideFlow Bahamas</h2>
-    <div class="btn-container">
-      <button class="btn-ride" onclick="scrollToCard('rider-section')" ontouchstart="scrollToCard('rider-section')">Request Ride</button>
-      <button class="btn-driver" onclick="scrollToCard('driver-section')" ontouchstart="scrollToCard('driver-section')">Become a Driver</button>
+  <!-- Landing Selection Screen -->
+  <div id="landing-view" class="landing-screen">
+    <h1>RideFlow Bahamas</h1>
+    <p>Select your experience to get started</p>
+    <div class="btn-main-group">
+      <button class="btn-ride-main" onclick="switchView('rider-view')" ontouchstart="switchView('rider-view')">Request Ride</button>
+      <button class="btn-driver-main" onclick="switchView('driver-view')" ontouchstart="switchView('driver-view')">Become a Driver</button>
     </div>
   </div>
 
-  <div class="section-container">
-    <!-- Rider Section -->
-    <div id="rider-section" class="card">
+  <!-- Rider Section View -->
+  <div id="rider-view" class="app-section">
+    <button class="back-btn" onclick="switchView('landing-view')" ontouchstart="switchView('landing-view')">← Back</button>
+    <div class="card">
       <h3>Choose a Ride Tier (Nassau / Paradise Island)</h3>
       <p style="color: #a0aec0; font-size: 14px;">Select your luxury vehicle class for island transit.</p>
       <div style="background: #1a2233; padding: 12px; border-radius: 8px; margin-top: 10px; border: 1px solid rgba(197, 160, 89, 0.3);">
@@ -100,9 +118,12 @@
         <p style="margin: 5px 0 0 0; font-size: 13px; color: #a0aec0;">Mid-size sedan with AC • $21.00</p>
       </div>
     </div>
+  </div>
 
-    <!-- Driver Section -->
-    <div id="driver-section" class="card">
+  <!-- Driver Section View -->
+  <div id="driver-view" class="app-section">
+    <button class="back-btn" onclick="switchView('landing-view')" ontouchstart="switchView('landing-view')">← Back</button>
+    <div class="card">
       <h3>Driver Compliance & Verification</h3>
       <p style="color: #a0aec0; font-size: 14px;">Manage your Bahamian commercial driving credentials and vehicle inspection records.</p>
       <p style="color: #48bb78; font-size: 14px; font-weight: bold;">✓ Road Traffic Department Status: Verified</p>
@@ -110,11 +131,13 @@
   </div>
 
   <script>
-    function scrollToCard(id) {
-      const target = document.getElementById(id);
-      if (target) {
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+    function switchView(viewId) {
+      document.getElementById('landing-view').style.display = 'none';
+      document.getElementById('rider-view').style.display = 'none';
+      document.getElementById('driver-view').style.display = 'none';
+      
+      document.getElementById(viewId).style.display = viewId === 'landing-view' ? 'flex' : 'block';
+      window.scrollTo(0, 0);
     }
   </script>
 
