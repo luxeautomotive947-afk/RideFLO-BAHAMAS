@@ -379,12 +379,16 @@
 
     function initMap() {
       if (!map) {
+        // Initialize map centered in Nassau, Bahamas
         map = L.map('map').setView([25.0343, -77.3963], 14);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-          attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+        
+        // Using public OpenStreetMap tiles (No API key required)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap contributors',
           maxZoom: 19
         }).addTo(map);
 
+        // Add driver tracking marker
         marker = L.marker([25.0383, -77.3900]).addTo(map)
           .bindPopup('<b>Driver:</b> Marcus Miller<br><b>Car:</b> Toyota Corolla (E-12948)')
           .openPopup();
