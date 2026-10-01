@@ -43,11 +43,11 @@
       background: #c5a059;
       color: #090d16;
       padding: 14px 28px;
-      text-decoration: none;
       font-weight: bold;
       border-radius: 8px;
       font-size: 16px;
-      display: inline-block;
+      cursor: pointer;
+      border: none;
       box-shadow: 0 4px 10px rgba(197, 160, 89, 0.3);
     }
     .btn-driver {
@@ -55,11 +55,10 @@
       color: #c5a059;
       border: 2px solid #c5a059;
       padding: 12px 26px;
-      text-decoration: none;
       font-weight: bold;
       border-radius: 8px;
       font-size: 16px;
-      display: inline-block;
+      cursor: pointer;
     }
     .section-container {
       padding: 40px 20px;
@@ -83,8 +82,8 @@
   <div class="landing-selector">
     <h2>RideFlow Bahamas</h2>
     <div class="btn-container">
-      <a href="#rider-section" class="btn-ride">Request Ride</a>
-      <a href="#driver-section" class="btn-driver">Become a Driver</a>
+      <button class="btn-ride" onclick="scrollToCard('rider-section')">Request Ride</button>
+      <button class="btn-driver" onclick="scrollToCard('driver-section')">Become a Driver</button>
     </div>
   </div>
 
@@ -110,6 +109,15 @@
       <p style="color: #48bb78; font-size: 14px; font-weight: bold;">✓ Road Traffic Department Status: Verified</p>
     </div>
   </div>
+
+  <script>
+    function scrollToCard(id) {
+      const target = document.getElementById(id);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  </script>
 
 </body>
 </html>
