@@ -286,29 +286,39 @@
     <button class="back-btn" onclick="switchView('landing-view')" ontouchstart="switchView('landing-view')">← Back</button>
     <div class="card">
       <h3>Driver Compliance & Registration</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Upload your credentials, select your payout preference, and complete the $50.00 registration fee.</p>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Upload credentials and expiration dates. Expired items automatically prohibit driving until renewed with the $75.00 renewal fee.</p>
       
-      <label>Road Traffic Department License</label>
+      <!-- Driver License & Expiry -->
+      <label>Road Traffic Department Driver's License</label>
       <div class="upload-box" onclick="document.getElementById('license-file').click()">
         <span style="color: #c5a059; font-weight: bold; font-size: 13px;">📁 Upload Driver's License</span>
         <input type="file" id="license-file" style="display:none;" onchange="updateFileName('license-file', 'license-status')">
         <p id="license-status" style="margin: 3px 0 0 0; font-size: 11px; color: #a0aec0;">No file chosen</p>
       </div>
+      <label>License Expiration Date</label>
+      <input type="date" id="lic-exp-date" value="2027-12-31">
 
-      <label>Vehicle Inspection Certificate</label>
+      <!-- Vehicle License / Inspection Expiry -->
+      <label>Vehicle License (Road Traffic Inspection)</label>
       <div class="upload-box" onclick="document.getElementById('inspection-file').click()">
-        <span style="color: #c5a059; font-weight: bold; font-size: 13px;">📁 Upload Inspection Record</span>
+        <span style="color: #c5a059; font-weight: bold; font-size: 13px;">📁 Upload Vehicle Inspection / License</span>
         <input type="file" id="inspection-file" style="display:none;" onchange="updateFileName('inspection-file', 'inspection-status')">
         <p id="inspection-status" style="margin: 3px 0 0 0; font-size: 11px; color: #a0aec0;">No file chosen</p>
       </div>
+      <label>Vehicle License Expiration Date</label>
+      <input type="date" id="veh-exp-date" value="2027-12-31">
 
+      <!-- Insurance Expiry -->
       <label>Vehicle Insurance Certificate</label>
       <div class="upload-box" onclick="document.getElementById('insurance-file').click()">
         <span style="color: #c5a059; font-weight: bold; font-size: 13px;">📁 Upload Insurance Document</span>
         <input type="file" id="insurance-file" style="display:none;" onchange="updateFileName('insurance-file', 'insurance-status')">
         <p id="insurance-status" style="margin: 3px 0 0 0; font-size: 11px; color: #a0aec0;">No file chosen</p>
       </div>
+      <label>Insurance Expiration Date</label>
+      <input type="date" id="ins-exp-date" value="2027-12-31">
 
+      <!-- Police Record -->
       <label>Police Character Record (Certificate)</label>
       <div class="upload-box" onclick="document.getElementById('police-file').click()">
         <span style="color: #c5a059; font-weight: bold; font-size: 13px;">📁 Upload Police Record</span>
@@ -329,10 +339,11 @@
       <label>Account / Wallet Identifier Details</label>
       <input type="text" id="payout-details" placeholder="Enter phone #, wallet ID, or bank account #">
 
-      <!-- Registration Fee Payment Section -->
+      <!-- Registration & Renewal Fee Payment Section ($75.00) -->
       <div style="background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid #c5a059; margin-top: 15px; margin-bottom: 15px;">
-        <p style="margin: 0 0 8px 0; font-size: 14px; color: #c5a059; font-weight: bold;">💳 One-Time Driver Registration Fee: $50.00</p>
-        <label>Driver Registration Card Number</label>
+        <p style="margin: 0 0 8px 0; font-size: 14px; color: #c5a059; font-weight: bold;">💳 Registration / Renewal Fee: $75.00</p>
+        <p style="margin: 0 0 10px 0; font-size: 11px; color: #a0aec0;">Includes $50 initial registration or $75 renewal compliance verification fee upon credential expiry.</p>
+        <label>Driver Card Number</label>
         <input type="text" id="driver-cc-num" value="4242 •••• •••• 4242">
         
         <div style="display: flex; gap: 10px;">
@@ -347,7 +358,7 @@
         </div>
       </div>
 
-      <button class="action-btn" onclick="submitCredentials()">Pay $50 Fee & Submit Application</button>
+      <button class="action-btn" onclick="submitCredentials()">Pay $75 Fee & Submit / Renew Compliance</button>
     </div>
   </div>
 
@@ -531,17 +542,34 @@
       const method = document.getElementById('payout-method').value;
       const details = document.getElementById('payout-details').value;
       const driverCc = document.getElementById('driver-cc-num').value;
+      
+      const licExp = document.getElementById('lic-exp-date').value;
+      const vehExp = document.getElementById('veh-exp-date').value;
+      const insExp = document.getElementById('ins-exp-date').value;
 
       if (!details) {
         alert('Please provide your payout account identifier or number.');
         return;
       }
       if (!driverCc) {
-        alert('Please enter payment details for the $50.00 registration fee.');
+        alert('Please enter payment details for the $75.00 registration/renewal fee.');
+        return;
+      }
+
+      // Check Expiration Dates against today's date
+      const today = new Date().toISOString().split('T')[0];
+      let expiredItems = [];
+
+      if (licExp < today) expiredItems.push("Driver's License");
+      if (vehExp < today) expiredItems.push("Vehicle License / Inspection");
+      if (insExp < today) expiredItems.push("Vehicle Insurance");
+
+      if (expiredItems.length > 0) {
+        alert(`❌ COMPLIANCE LOCKOUT: The following document(s) are expired: ${expiredItems.join(', ')}.\n\nYou are PROHIBITED from driving. Please update your document dates and complete the $75.00 renewal fee to lift the prohibition.`);
         return;
       }
       
-      alert(`$50.00 registration fee successfully charged! Compliance documents submitted. Weekly payouts set to receive via ${method}. Status pending verification.`);
+      alert(`$75.00 renewal/registration fee successfully charged! All compliance documents verified as active. Weekly payouts set to receive via ${method}. Driver status: ACTIVE.`);
       switchView('landing-view');
     }
   </script>
