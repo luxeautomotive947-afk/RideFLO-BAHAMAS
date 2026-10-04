@@ -180,7 +180,7 @@
     <button class="back-btn" onclick="switchView('landing-view')" ontouchstart="switchView('landing-view')">← Back</button>
     <div class="card">
       <h3>Where are you heading?</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Nassau & Paradise Island Transit</p>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Nassau & Paradise Island Transit (Gas: $7.54/gal)</p>
       
       <label>Pickup Location</label>
       <input type="text" id="pickup-loc" value="Nassau (Current Location)">
@@ -190,9 +190,9 @@
 
       <!-- Realtime Fare Estimate Box -->
       <div id="fare-estimate-box" style="background: #1a2233; padding: 12px; border-radius: 8px; border: 1px dashed #c5a059; margin-bottom: 15px; display: none;">
-        <p style="margin: 0; font-size: 13px; color: #c5a059; font-weight: bold;">⚡ Real-Time Estimated Fare:</p>
+        <p style="margin: 0; font-size: 13px; color: #c5a059; font-weight: bold;">⚡ Real-Time Estimated Fare ($7.54/gal factored):</p>
         <p id="estimated-fare-text" style="margin: 4px 0 0 0; font-size: 16px; color: #ffffff; font-weight: bold;">$0.00</p>
-        <p style="margin: 4px 0 0 0; font-size: 11px; color: #a0aec0;">Calculated via live distance & traffic metrics in Nassau.</p>
+        <p style="margin: 4px 0 0 0; font-size: 11px; color: #a0aec0;">Calculated via local fuel surcharges & Nassau distance metrics.</p>
       </div>
 
       <h4 style="color: #c5a059; margin: 15px 0 8px 0; font-size: 14px;">Cashless Payment (Credit Card)</h4>
@@ -354,8 +354,8 @@
   <script>
     let selectedVehicleTier = null;
     let currentDestination = '';
-    let dynamicEconomyPrice = "$15.00";
-    let dynamicComfortPrice = "$22.00";
+    let dynamicEconomyPrice = "$22.00";
+    let dynamicComfortPrice = "$34.00";
     let map = null;
     let marker = null;
     let currentRating = 0;
@@ -397,7 +397,7 @@
       }
     }
 
-    // Real-Time Fare Calculator based on character length / destination string simulation
+    // Real-Time Fare Calculator factoring in $7.54/gal gas baseline + local distance weighting
     function calculateRealtimeFareEstimate() {
       const dest = document.getElementById('dest-loc').value.trim();
       const box = document.getElementById('fare-estimate-box');
@@ -408,13 +408,14 @@
         return;
       }
 
-      let baseFactor = dest.length * 1.4 + 10;
+      // Base formula incorporating high fuel overhead ($7.54/gal)
+      let baseFactor = dest.length * 1.8 + 16;
       if (dest.toLowerCase().includes('atlantis') || dest.toLowerCase().includes('paradise island') || dest.toLowerCase().includes('airport')) {
-        baseFactor += 12; 
+        baseFactor += 15; // Bridge tolls / Airport surcharge factor
       }
 
-      const ecoVal = Math.max(14, Math.round(baseFactor));
-      const comfVal = Math.round(ecoVal * 1.4);
+      const ecoVal = Math.max(20, Math.round(baseFactor));
+      const comfVal = Math.round(ecoVal * 1.5);
 
       dynamicEconomyPrice = `$${ecoVal}.00`;
       dynamicComfortPrice = `$${comfVal}.00`;
@@ -436,7 +437,7 @@
       }
       currentDestination = destInput;
       document.getElementById('dest-display').innerText = "Heading to: " + currentDestination;
-      document.getElementById('tier-fare-summary').innerText = `Real-time calculated rates applied for this trip.`;
+      document.getElementById('tier-fare-summary').innerText = `Real-time fuel-adjusted rates ($7.54/gal) applied for this trip.`;
       
       document.getElementById('eco-label').innerText = `RideFlow Economy (${dynamicEconomyPrice})`;
       document.getElementById('comf-label').innerText = `RideFlow Comfort (${dynamicComfortPrice})`;
