@@ -180,7 +180,7 @@
     <button class="back-btn" onclick="switchView('landing-view')" ontouchstart="switchView('landing-view')">← Back</button>
     <div class="card">
       <h3>Where are you heading?</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Nassau & Paradise Island Transit (Gas: $7.54/gal)</p>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Nassau & Paradise Island Transit</p>
       
       <label>Pickup Location</label>
       <input type="text" id="pickup-loc" value="Nassau (Current Location)">
@@ -190,12 +190,12 @@
 
       <!-- Realtime Fare Estimate Box -->
       <div id="fare-estimate-box" style="background: #1a2233; padding: 12px; border-radius: 8px; border: 1px dashed #c5a059; margin-bottom: 15px; display: none;">
-        <p style="margin: 0; font-size: 13px; color: #c5a059; font-weight: bold;">⚡ Real-Time Estimated Fare ($7.54/gal factored):</p>
+        <p style="margin: 0; font-size: 13px; color: #c5a059; font-weight: bold;">⚡ Real-Time Estimated Fare:</p>
         <p id="estimated-fare-text" style="margin: 4px 0 0 0; font-size: 16px; color: #ffffff; font-weight: bold;">$0.00</p>
-        <p style="margin: 4px 0 0 0; font-size: 11px; color: #a0aec0;">Calculated via local fuel surcharges & Nassau distance metrics.</p>
+        <p style="margin: 4px 0 0 0; font-size: 11px; color: #a0aec0;">Calculated via Nassau route metrics.</p>
       </div>
 
-      <h4 style="color: #c5a059; margin: 15px 0 8px 0; font-size: 14px;">Cashless Payment (Credit Card)</h4>
+      <h4 style="color: #c5a059; margin: 15px 0 8px 0; font-size: 14px;">Cashless Payment (Credit/Debit Card)</h4>
       <label>Card Number</label>
       <input type="text" id="cc-num" value="4242 •••• •••• 4242">
       
@@ -239,7 +239,7 @@
   <div id="rider-tracking-view" class="app-section">
     <div class="card">
       <h3 style="color: #48bb78; margin-top: 0;">Driver Assigned!</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Your driver is en route. Payment secured via card.</p>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Your driver is en route. Card payment routed directly to your bank account.</p>
       
       <div id="map"></div>
 
@@ -285,8 +285,8 @@
   <div id="driver-view" class="app-section">
     <button class="back-btn" onclick="switchView('landing-view')" ontouchstart="switchView('landing-view')">← Back</button>
     <div class="card">
-      <h3>Driver Compliance & Registration</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Upload credentials and expiration dates. Expired items automatically prohibit driving until renewed with the $75.00 renewal fee.</p>
+      <h3>Driver Compliance & Direct Bank Payouts</h3>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Upload credentials and bank details. Card payments from riders settle directly into your bank account. Expired documents automatically prohibit driving until renewed.</p>
       
       <!-- Driver License & Expiry -->
       <label>Road Traffic Department Driver's License</label>
@@ -328,21 +328,27 @@
 
       <hr style="border: 0; border-top: 1px solid rgba(197, 160, 89, 0.3); margin: 20px 0;">
 
-      <!-- Weekly Payout Option Selection -->
-      <label style="color: #c5a059; font-size: 14px;">Weekly Payout Method</label>
-      <select id="payout-method">
-        <option value="Sun Cash">Sun Cash Wallet</option>
-        <option value="Sand Dollar">Sand Dollar (Central Bank Digital Currency)</option>
-        <option value="Bank Transfer">Direct Bank Transfer</option>
+      <!-- Direct Bank Account Payout Configuration -->
+      <label style="color: #c5a059; font-size: 14px;">Direct Bank Payout Destination</label>
+      <select id="bank-name">
+        <option value="RBC Royal Bank Bahamas">RBC Royal Bank Bahamas</option>
+        <option value="CIBC Caribbean (FirstCaribbean)">CIBC Caribbean (FirstCaribbean)</option>
+        <option value="Bank of Nova Scotia (Scotiabank)">Bank of Nova Scotia (Scotiabank)</option>
+        <option value="Commonwealth Bank">Commonwealth Bank</option>
+        <option value="FINCO">FINCO</option>
+        <option value="Bahamas First / Other Local Bank">Other Local Bank / Credit Union</option>
       </select>
-      
-      <label>Account / Wallet Identifier Details</label>
-      <input type="text" id="payout-details" placeholder="Enter phone #, wallet ID, or bank account #">
+
+      <label>Bank Account Number</label>
+      <input type="text" id="bank-acc-num" placeholder="Enter your bank account number">
+
+      <label>Transit / Branch / Routing Code</label>
+      <input type="text" id="bank-routing" placeholder="Enter branch transit or routing code">
 
       <!-- Registration & Renewal Fee Payment Section ($75.00) -->
       <div style="background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid #c5a059; margin-top: 15px; margin-bottom: 15px;">
         <p style="margin: 0 0 8px 0; font-size: 14px; color: #c5a059; font-weight: bold;">💳 Registration / Renewal Fee: $75.00</p>
-        <p style="margin: 0 0 10px 0; font-size: 11px; color: #a0aec0;">Includes $50 initial registration or $75 renewal compliance verification fee upon credential expiry.</p>
+        <p style="margin: 0 0 10px 0; font-size: 11px; color: #a0aec0;">Covers initial registration ($50) or compliance renewal verification ($75) upon document expiry.</p>
         <label>Driver Card Number</label>
         <input type="text" id="driver-cc-num" value="4242 •••• •••• 4242">
         
@@ -358,7 +364,7 @@
         </div>
       </div>
 
-      <button class="action-btn" onclick="submitCredentials()">Pay $75 Fee & Submit / Renew Compliance</button>
+      <button class="action-btn" onclick="submitCredentials()">Pay $75 Fee & Link Bank Account</button>
     </div>
   </div>
 
@@ -408,7 +414,7 @@
       }
     }
 
-    // Real-Time Fare Calculator factoring in $7.54/gal gas baseline + local distance weighting
+    // Real-Time Fare Calculator based on Nassau distance metrics
     function calculateRealtimeFareEstimate() {
       const dest = document.getElementById('dest-loc').value.trim();
       const box = document.getElementById('fare-estimate-box');
@@ -419,7 +425,6 @@
         return;
       }
 
-      // Base formula incorporating high fuel overhead ($7.54/gal)
       let baseFactor = dest.length * 1.8 + 16;
       if (dest.toLowerCase().includes('atlantis') || dest.toLowerCase().includes('paradise island') || dest.toLowerCase().includes('airport')) {
         baseFactor += 15; // Bridge tolls / Airport surcharge factor
@@ -448,7 +453,7 @@
       }
       currentDestination = destInput;
       document.getElementById('dest-display').innerText = "Heading to: " + currentDestination;
-      document.getElementById('tier-fare-summary').innerText = `Real-time fuel-adjusted rates ($7.54/gal) applied for this trip.`;
+      document.getElementById('tier-fare-summary').innerText = `Real-time rates applied for this trip. Card payments deposit directly to driver bank accounts.`;
       
       document.getElementById('eco-label').innerText = `RideFlow Economy (${dynamicEconomyPrice})`;
       document.getElementById('comf-label').innerText = `RideFlow Comfort (${dynamicComfortPrice})`;
@@ -467,7 +472,7 @@
         alert('Please select a vehicle tier.');
         return;
       }
-      alert(`Cashless payment authorized (${selectedVehicleTier.price} for ${selectedVehicleTier.tierName})! Finding your matched driver...`);
+      alert(`Cashless payment authorized (${selectedVehicleTier.price} for ${selectedVehicleTier.tierName})! Funds scheduled for direct deposit to driver bank account. Finding your matched driver...`);
       switchView('rider-tracking-view');
     }
 
@@ -539,16 +544,17 @@
     }
 
     function submitCredentials() {
-      const method = document.getElementById('payout-method').value;
-      const details = document.getElementById('payout-details').value;
+      const bankName = document.getElementById('bank-name').value;
+      const bankAcc = document.getElementById('bank-acc-num').value;
+      const bankRouting = document.getElementById('bank-routing').value;
       const driverCc = document.getElementById('driver-cc-num').value;
       
       const licExp = document.getElementById('lic-exp-date').value;
       const vehExp = document.getElementById('veh-exp-date').value;
       const insExp = document.getElementById('ins-exp-date').value;
 
-      if (!details) {
-        alert('Please provide your payout account identifier or number.');
+      if (!bankAcc || !bankRouting) {
+        alert('Please provide your bank account number and branch routing code for direct payouts.');
         return;
       }
       if (!driverCc) {
@@ -569,7 +575,7 @@
         return;
       }
       
-      alert(`$75.00 renewal/registration fee successfully charged! All compliance documents verified as active. Weekly payouts set to receive via ${method}. Driver status: ACTIVE.`);
+      alert(`$75.00 fee successfully processed! Bank account linked to ${bankName}. All compliance documents verified as active. Driver status: ACTIVE & ready for direct bank deposits.`);
       switchView('landing-view');
     }
   </script>
