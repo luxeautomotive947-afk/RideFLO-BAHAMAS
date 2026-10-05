@@ -180,7 +180,7 @@
     <button class="back-btn" onclick="switchView('landing-view')" ontouchstart="switchView('landing-view')">← Back</button>
     <div class="card">
       <h3>Where are you heading?</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Tap anywhere on the map to calculate distance in miles. Off-peak hours get an automatic 15% discount!</p>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Tap anywhere on the map to calculate distance at $5.00 per mile. Off-peak hours get an automatic 15% discount!</p>
       
       <!-- Interactive Pin-Drop Map -->
       <div id="destination-picker-map" class="map-container"></div>
@@ -375,8 +375,8 @@
   <script>
     let selectedVehicleTier = null;
     let currentDestination = '';
-    let dynamicEconomyPrice = "$15.00";
-    let dynamicComfortPrice = "$25.00";
+    let dynamicEconomyPrice = "$18.00";
+    let dynamicComfortPrice = "$28.00";
     let destinationPickerMap = null;
     let activeTripMap = null;
     let destPinMarker = null;
@@ -416,7 +416,7 @@
           maxZoom: 19
         }).addTo(destinationPickerMap);
 
-        // Click on map to drop destination pin & calculate distance in miles
+        // Click on map to drop destination pin & calculate distance in miles ($5/mile)
         destinationPickerMap.on('click', function(e) {
           const lat = e.latlng.lat;
           const lng = e.latlng.lng;
@@ -473,15 +473,15 @@
       }
     }
 
-    // Evaluate Distance Pricing (Miles) + Time-Based Peak/Off-Peak Multiplier Engine
+    // Evaluate Distance Pricing ($5.00 / mile) + Time-Based Peak/Off-Peak Multiplier Engine
     function evaluateDistancePricing(distanceMiles) {
       const box = document.getElementById('fare-estimate-box');
       const titleElem = document.getElementById('fare-mode-title');
       const textElem = document.getElementById('estimated-fare-text');
       const descElem = document.getElementById('fare-mode-desc');
 
-      // Pure distance calculation: $8.00 base + $2.50 per mile for Economy
-      let baseEco = 8.00 + (distanceMiles * 2.50);
+      // Distance calculation: $8.00 base + $5.00 per mile for Economy
+      let baseEco = 8.00 + (distanceMiles * 5.00);
       let baseComf = baseEco * 1.4;
 
       // Time-Based Peak & Off-Peak Pricing Calculation
@@ -512,7 +512,7 @@
       dynamicEconomyPrice = `$${Math.max(ecoVal, 10)}.00`;
       dynamicComfortPrice = `$${Math.max(comfVal, 15)}.00`;
 
-      titleElem.innerText = `📍 Distance: ${distanceMiles.toFixed(1)} Miles from Pickup`;
+      titleElem.innerText = `📍 Distance: ${distanceMiles.toFixed(1)} Miles from Pickup ($5.00/mi)`;
       textElem.innerText = `Economy: ${dynamicEconomyPrice}  |  Comfort: ${dynamicComfortPrice}`;
       descElem.innerText = timeLabel;
 
@@ -532,7 +532,7 @@
       }
       currentDestination = destInput;
       document.getElementById('dest-display').innerText = "Destination: " + currentDestination;
-      document.getElementById('tier-fare-summary').innerText = `Mileage pricing applied. Card payments deposit directly to driver bank accounts.`;
+      document.getElementById('tier-fare-summary').innerText = `Mileage pricing applied ($5.00/mile). Card payments deposit directly to driver bank accounts.`;
       
       document.getElementById('eco-label').innerText = `RideFlow Economy (${dynamicEconomyPrice})`;
       document.getElementById('comf-label').innerText = `RideFlow Comfort (${dynamicComfortPrice})`;
@@ -595,7 +595,7 @@
       let warningMsg = `Thank you for rating! Rating submitted successfully (${currentRating}/5 stars).`;
       
       if (driverBadReviewsCount >= 5) {
-        warningMsg += `\n\n⚠️️ AUTOMATED POLICY ALERT: Driver Marcus Miller has accumulated ${driverBadReviewsCount} bad reviews and is now PERMANENTLY BANNED from RideFlow Bahamas.`;
+        warningMsg += `\n\n⚠ AUTOMATED POLICY ALERT: Driver Marcus Miller has accumulated ${driverBadReviewsCount} bad reviews and is now PERMANENTLY BANNED from RideFlow Bahamas.`;
       } else {
         warningMsg += `\n(Driver currently has ${driverBadReviewsCount}/5 bad reviews toward a ban threshold).`;
       }
