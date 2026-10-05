@@ -180,7 +180,7 @@
     <button class="back-btn" onclick="switchView('landing-view')" ontouchstart="switchView('landing-view')">← Back</button>
     <div class="card">
       <h3>Where are you heading?</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Type constituency/corridor or click map pin to evaluate progressive outer-skirt fares.</p>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Type constituency or click map pin. Off-peak hours get an automatic 15% discount!</p>
       
       <!-- Interactive Pin-Drop Map -->
       <div id="destination-picker-map" class="map-container"></div>
@@ -190,7 +190,7 @@
       <input type="text" id="pickup-loc" value="Central Nassau">
 
       <label>Destination (Constituency / Landmark)</label>
-      <input type="text" id="dest-loc" placeholder="e.g., Killarney, Clifton, Yamacraw..." oninput="evaluateConstituencyJurisdiction()">
+      <input type="text" id="dest-loc" placeholder="e.g., Killarney, Clifton, Airport..." oninput="evaluateConstituencyJurisdiction()">
 
       <!-- Fare Estimate Box -->
       <div id="fare-estimate-box" style="background: #1a2233; padding: 12px; border-radius: 8px; border: 1px dashed #c5a059; margin-bottom: 15px; display: none;">
@@ -412,7 +412,7 @@
           maxZoom: 19
         }).addTo(destinationPickerMap);
 
-        // Click on map to drop destination pin & evaluate constituency boundaries & progressive distance
+        // Click on map to drop destination pin & evaluate outer skirts
         destinationPickerMap.on('click', function(e) {
           const lat = e.latlng.lat;
           const lng = e.latlng.lng;
@@ -424,15 +424,12 @@
           destPinMarker = L.marker([lat, lng]).addTo(destinationPickerMap)
             .bindPopup('Dropped Pin Constituency').openPopup();
 
-          // Calculate distance from center Nassau (-77.3963, 25.0343) in approximate kilometers for progressive scaling
-          const centerLng = -77.3963;
-          const centerLat = 25.0343;
-          const approxDistKm = Math.sqrt(Math.pow(lng - centerLng, 2) + Math.pow(lat - centerLat, 2)) * 111;
-
-          // Coordinate mapping for New Providence constituencies
+          // Coordinate mapping for New Providence constituencies & Airport zone
           let constituencyName = "";
-          if (lng < -77.45) {
-            constituencyName = "Clifton / Far West (Progressive Distance)";
+          if (lng < -77.53) {
+            constituencyName = "Beyond Airport / Far West Zone";
+          } else if (lng >= -77.53 && lng < -77.48) {
+            constituencyName = "Airport / Lynden Pindling International Area";
           } else if (lng < -77.42) {
             constituencyName = "Killarney Constituency";
           } else if (lng < -77.40 && lat < 25.03) {
@@ -457,7 +454,7 @@
             constituencyName = "Downtown / Center Nassau (Inner City)";
           }
 
-          document.getElementById('dest-loc').value = constituencyName + ` (~${Math.round(approxDistKm)} km out)`;
+          document.getElementById('dest-loc').value = constituencyName;
           evaluateConstituencyJurisdiction();
         });
       } else {
@@ -482,7 +479,7 @@
       }
     }
 
-    // Evaluate Constituency Jurisdictions (Outer Skirts with progressive distance scaling)
+    // Evaluate Constituency Jurisdictions + Time-Based Peak/Off-Peak Multiplier Engine
     function evaluateConstituencyJurisdiction() {
       const inputVal = document.getElementById('dest-loc').value.trim().toLowerCase();
       const box = document.getElementById('fare-estimate-box');
@@ -495,12 +492,11 @@
         return;
       }
 
-      // Specified Outer Skirt Constituencies:
-      // Killarney, Clifton, Golden Isles, Southern Shores, Elizabeth Estates, South Beach, Seabreeze, Yamacraw, St. Anne’s, Montagu, Fox Hill
+      // 1. Determine Base Fare based on Outer Skirts vs Inner City
       const outerConstituencies = [
         "killarney", "clifton", "golden isles", "southern shores", 
         "elizabeth estates", "south beach", "seabreeze", "yamacraw", 
-        "st. anne", "montagu", "fox hill"
+        "st. anne", "montagu", "fox hill", "airport", "beyond airport"
       ];
 
       let isOuterSkirt = false;
@@ -511,38 +507,42 @@
         }
       }
 
-      if (isOuterSkirt) {
-        // Progressive Distance Scaling: Fare increases continuously as distance/length increases
-        let charLengthFactor = inputVal.length;
-        let distanceMultiplier = 2.8;
+      let baseEco = isOuterSkirt ? (22 + (inputVal.length * 1.5)) : 15;
+      let baseComf = isOuterSkirt ? (baseEco * 1.4) : 25;
 
-        // Extract km tag if generated from map pin drop
-        if (inputVal.includes("km out")) {
-          const match = inputVal.match(/~(\d+)\s*km out/);
-          if (match && match[1]) {
-            charLengthFactor = parseInt(match[1]) * 2.5;
-          }
-        }
+      // 2. Time-Based Peak & Off-Peak Pricing Calculation
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const timeDecimal = currentHour + (currentMinute / 60);
 
-        let baseFactor = 18 + (charLengthFactor * distanceMultiplier);
-        const ecoVal = Math.max(22, Math.round(baseFactor));
-        const comfVal = Math.round(ecoVal * 1.4);
+      let multiplier = 1.0;
+      let timeLabel = "Standard Rate";
 
-        dynamicEconomyPrice = `$${ecoVal}.00`;
-        dynamicComfortPrice = `$${comfVal}.00`;
-
-        titleElem.innerText = `📍 Outer Skirt Constituency (Progressive Distance Fare):`;
-        textElem.innerText = `Economy: ${dynamicEconomyPrice}  |  Comfort: ${dynamicComfortPrice}`;
-        descElem.innerText = "Fare scales progressively and continuously as the trip goes further outward.";
+      // Morning Rush Hour: 7:00 AM to 9:30 AM (7.0 to 9.5) -> 10% Surge
+      // Evening Rush Hour: 4:00 PM to 6:30 PM (16.0 to 18.5) -> 15% Surge
+      if (timeDecimal >= 7.0 && timeDecimal <= 9.5) {
+        multiplier = 1.10; // +10% Surge
+        timeLabel = "Morning Rush Hour Surge (+10%)";
+      } else if (timeDecimal >= 16.0 && timeDecimal <= 18.5) {
+        multiplier = 1.15; // +15% Surge
+        timeLabel = "Evening Rush Hour Surge (+15%)";
       } else {
-        // Inner-City Flat Rate
-        dynamicEconomyPrice = "$15.00";
-        dynamicComfortPrice = "$25.00";
-
-        titleElem.innerText = "🏙️ Inner-City Flat Rate Jurisdiction:";
-        textElem.innerText = `Economy: ${dynamicEconomyPrice}  |  Comfort: ${dynamicComfortPrice}`;
-        descElem.innerText = "Standard predictable flat rate for central urban Nassau.";
+        multiplier = 0.85; // 15% OFF Discount for Before/After Rush Hours (Off-Peak)
+        timeLabel = "🌟 Off-Peak Discount Applied (15% OFF Before/After Rush Hours)";
       }
+
+      const ecoVal = Math.round(baseEco * multiplier);
+      const comfVal = Math.round(baseComf * multiplier);
+
+      dynamicEconomyPrice = `$${ecoVal}.00`;
+      dynamicComfortPrice = `$${comfVal}.00`;
+
+      let locationTypeTitle = isOuterSkirt ? "📍 Outer Skirt Constituency / Airport Zone:" : "🏙 Inner-City Flat Rate Jurisdiction:";
+
+      titleElem.innerText = locationTypeTitle;
+      textElem.innerText = `Economy: ${dynamicEconomyPrice}  |  Comfort: ${dynamicComfortPrice}`;
+      descElem.innerText = timeLabel;
 
       box.style.display = 'block';
     }
@@ -560,7 +560,7 @@
       }
       currentDestination = destInput;
       document.getElementById('dest-display').innerText = "Heading to: " + currentDestination;
-      document.getElementById('tier-fare-summary').innerText = `Constituency jurisdiction applied. Card payments deposit directly to driver bank accounts.`;
+      document.getElementById('tier-fare-summary').innerText = `Time-based jurisdiction applied. Card payments deposit directly to driver bank accounts.`;
       
       document.getElementById('eco-label').innerText = `RideFlow Economy (${dynamicEconomyPrice})`;
       document.getElementById('comf-label').innerText = `RideFlow Comfort (${dynamicComfortPrice})`;
