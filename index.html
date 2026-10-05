@@ -143,9 +143,9 @@
       margin-bottom: 15px;
       cursor: pointer;
     }
-    #map {
+    .map-container {
       width: 100%;
-      height: 180px;
+      height: 220px;
       border-radius: 8px;
       border: 1px solid rgba(197, 160, 89, 0.4);
       margin-bottom: 15px;
@@ -175,18 +175,22 @@
     </div>
   </div>
 
-  <!-- Step 1: Choose Destination & Credit Card Payment -->
+  <!-- Step 1: Choose Destination & Pin Drop Map -->
   <div id="rider-destination-view" class="app-section">
     <button class="back-btn" onclick="switchView('landing-view')" ontouchstart="switchView('landing-view')">← Back</button>
     <div class="card">
       <h3>Where are you heading?</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Inner-City Flat Rates & Outer Skirt Real-Time Transit</p>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Type location or click/drop pin on the map below.</p>
       
+      <!-- Interactive Pin-Drop Map -->
+      <div id="destination-picker-map" class="map-container"></div>
+      <p style="font-size: 11px; color: #c5a059; margin-top: -10px; margin-bottom: 15px; text-align: center;">📍 Tap anywhere on map to drop destination pin</p>
+
       <label>Pickup Location</label>
       <input type="text" id="pickup-loc" value="Nassau (Current Location)">
 
-      <label>Destination</label>
-      <input type="text" id="dest-loc" placeholder="e.g., Downtown / Bay St OR Atlantis, Airport" oninput="calculateFareMode()">
+      <label>Destination (Corridor or Pin Coordinates)</label>
+      <input type="text" id="dest-loc" placeholder="e.g., Golden Isles, Lyford Cay, Gladstone Rd..." oninput="evaluateFareByCorridor()">
 
       <!-- Fare Estimate Box -->
       <div id="fare-estimate-box" style="background: #1a2233; padding: 12px; border-radius: 8px; border: 1px dashed #c5a059; margin-bottom: 15px; display: none;">
@@ -241,7 +245,7 @@
       <h3 style="color: #48bb78; margin-top: 0;">Driver Assigned!</h3>
       <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Your driver is en route. Card payment routed directly to your bank account.</p>
       
-      <div id="map"></div>
+      <div id="active-trip-map" class="map-container"></div>
 
       <div style="background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid rgba(197, 160, 89, 0.4); margin-bottom: 15px;">
         <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Driver:</strong> Marcus Miller</p>
@@ -373,8 +377,10 @@
     let currentDestination = '';
     let dynamicEconomyPrice = "$15.00";
     let dynamicComfortPrice = "$25.00";
-    let map = null;
-    let marker = null;
+    let destinationPickerMap = null;
+    let activeTripMap = null;
+    let destPinMarker = null;
+    let driverMarker = null;
     let currentRating = 0;
     let driverBadReviewsCount = parseInt(localStorage.getItem('driver_bad_reviews') || '0');
 
@@ -389,79 +395,129 @@
       document.getElementById(viewId).style.display = viewId === 'landing-view' ? 'flex' : 'block';
       window.scrollTo(0, 0);
 
-      if (viewId === 'rider-tracking-view') {
-        setTimeout(initMap, 200);
+      if (viewId === 'rider-destination-view') {
+        setTimeout(initDestinationPickerMap, 200);
+      } else if (viewId === 'rider-tracking-view') {
+        setTimeout(initActiveTripMap, 200);
       }
     }
 
-    function initMap() {
-      if (!map) {
-        // Initialize map centered in Nassau, Bahamas
-        map = L.map('map').setView([25.0343, -77.3963], 14);
+    // Initialize Pin-Drop Destination Map (Center: Nassau, Bahamas)
+    function initDestinationPickerMap() {
+      if (!destinationPickerMap) {
+        destinationPickerMap = L.map('destination-picker-map').setView([25.0343, -77.3963], 13);
         
-        // Using public OpenStreetMap tiles (No API key required)
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '&copy; OpenStreetMap contributors',
           maxZoom: 19
-        }).addTo(map);
+        }).addTo(destinationPickerMap);
 
-        // Add driver tracking marker
-        marker = L.marker([25.0383, -77.3900]).addTo(map)
-          .bindPopup('<b>Driver:</b> Marcus Miller<br><b>Car:</b> Toyota Corolla (E-12948)')
-          .openPopup();
+        // Click on map to drop destination pin & calculate fare based on coordinates/corridors
+        destinationPickerMap.on('click', function(e) {
+          const lat = e.latlng.lat;
+          const lng = e.latlng.lng;
+          
+          if (destPinMarker) {
+            destinationPickerMap.removeLayer(destPinMarker);
+          }
+          
+          destPinMarker = L.marker([lat, lng]).addTo(destinationPickerMap)
+            .bindPopup('Selected Pin Drop').openPopup();
+
+          // Determine corridor based on longitude/latitude relative to center Nassau (-77.3963)
+          let detectedName = "";
+          if (lng < -77.44) {
+            detectedName = "Lyford Cay / Albany / Western Outskirt (Pin Drop)";
+          } else if (lng < -77.41) {
+            detectedName = "Golden Isles / Gladstone / Bacardi Rd West (Pin Drop)";
+          } else if (lng > -77.36) {
+            detectedName = "Bernard Rd to Soldier Rd East Outskirt (Pin Drop)";
+          } else {
+            detectedName = "Downtown / Central Nassau (Pin Drop)";
+          }
+
+          document.getElementById('dest-loc').value = detectedName;
+          evaluateFareByCorridor();
+        });
       } else {
-        map.invalidateSize();
+        destinationPickerMap.invalidateSize();
       }
     }
 
-    // Dual Fare Logic: Inner-City Flat Rate vs. Outer Skirt Real-Time Calculation
-    function calculateFareMode() {
-      const dest = document.getElementById('dest-loc').value.trim().toLowerCase();
+    function initActiveTripMap() {
+      if (!activeTripMap) {
+        activeTripMap = L.map('active-trip-map').setView([25.0343, -77.3963], 14);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap contributors',
+          maxZoom: 19
+        }).addTo(activeTripMap);
+
+        driverMarker = L.marker([25.0383, -77.3900]).addTo(activeTripMap)
+          .bindPopup('<b>Driver:</b> Marcus Miller<br><b>Car:</b> Toyota Corolla (E-12948)')
+          .openPopup();
+      } else {
+        activeTripMap.invalidateSize();
+      }
+    }
+
+    // Precise Corridor & Pin-Drop Evaluation for Inner-City vs Outer Skirts
+    function evaluateFareByCorridor() {
+      const inputVal = document.getElementById('dest-loc').value.trim().toLowerCase();
       const box = document.getElementById('fare-estimate-box');
       const titleElem = document.getElementById('fare-mode-title');
       const textElem = document.getElementById('estimated-fare-text');
       const descElem = document.getElementById('fare-mode-desc');
 
-      if (dest.length < 3) {
+      if (inputVal.length < 3) {
         box.style.display = 'none';
         return;
       }
 
-      // Check if destination is in outer skirts, airport, or paradise island / cable beach
-      const isOuterSkirt = dest.includes('atlantis') || 
-                           dest.includes('paradise island') || 
-                           dest.includes('airport') || 
-                           dest.includes('lynden pindling') || 
-                           dest.includes('cable beach') || 
-                           dest.includes('sandyport') || 
-                           dest.includes('east street south') || 
-                           dest.includes('carmichael') || 
-                           dest.includes('old fort bay') ||
-                           dest.length > 20;
+      // Specified Outer Skirt Corridors:
+      // 1. Golden Isles, Gladstone Road, Bacardi Road going west
+      // 2. Bernard Road to Soldier Road going east
+      // 3. Lyford Cay, Tropical Gardens, Albany going west
+      const isWesternOuterSkirt = inputVal.includes('golden isles') ||
+                                   inputVal.includes('gladstone') ||
+                                   inputVal.includes('bacardi') ||
+                                   inputVal.includes('lyford cay') ||
+                                   inputVal.includes('tropical gardens') ||
+                                   inputVal.includes('albany') ||
+                                   inputVal.includes('old fort bay') ||
+                                   inputVal.includes('airport');
 
-      if (isOuterSkirt) {
+      const isEasternOuterSkirt = inputVal.includes('bernard') ||
+                                   inputVal.includes('soldier road') ||
+                                   inputVal.includes('fox hill') ||
+                                   inputVal.includes('mackey street east');
+
+      const isPinDropOuter = inputVal.includes('western outskirt') || inputVal.includes('east outskirt');
+
+      if (isWesternOuterSkirt || isEasternOuterSkirt || isPinDropOuter) {
         // Outer Skirt Real-Time Calculation
-        let baseFactor = dest.length * 1.8 + 18;
-        if (dest.includes('atlantis') || dest.includes('paradise island') || dest.includes('airport')) {
-          baseFactor += 12; // Bridge/Airport toll & distance weighting
+        let baseFactor = inputVal.length * 2.1 + 20;
+        if (isWesternOuterSkirt && (inputVal.includes('lyford') || inputVal.includes('albany'))) {
+          baseFactor += 16; // Extended western distance surcharge
         }
-        const ecoVal = Math.max(22, Math.round(baseFactor));
-        const comfVal = Math.round(ecoVal * 1.4);
+
+        const ecoVal = Math.max(24, Math.round(baseFactor));
+        const comfVal = Math.round(ecoVal * 1.45);
 
         dynamicEconomyPrice = `$${ecoVal}.00`;
         dynamicComfortPrice = `$${comfVal}.00`;
 
-        titleElem.innerText = "📍 Outer Skirt Real-Time Fare:";
+        titleElem.innerText = "📍 Outer Skirt Real-Time Jurisdiction Fare:";
         textElem.innerText = `Economy: ${dynamicEconomyPrice}  |  Comfort: ${dynamicComfortPrice}`;
-        descElem.innerText = "Calculated dynamically based on outer skirt distance metrics.";
+        descElem.innerText = "Calculated via mapped outer corridor boundary rules (Golden Isles/Gladstone/Bacardi/Bernard/Soldier/Lyford/Albany).";
       } else {
         // Inner-City Flat Rate
         dynamicEconomyPrice = "$15.00";
         dynamicComfortPrice = "$25.00";
 
-        titleElem.innerText = "🏙️ Inner-City Flat Rate:";
+        titleElem.innerText = "🏙️ Inner-City Flat Rate Jurisdiction:";
         textElem.innerText = `Economy: ${dynamicEconomyPrice}  |  Comfort: ${dynamicComfortPrice}`;
-        descElem.innerText = "Standard predictable flat rate for downtown and central Nassau trips.";
+        descElem.innerText = "Downtown and central constituency flat-rate transit.";
       }
 
       box.style.display = 'block';
@@ -471,7 +527,7 @@
       const destInput = document.getElementById('dest-loc').value;
       const ccNum = document.getElementById('cc-num').value;
       if (!destInput) {
-        alert('Please enter a destination.');
+        alert('Please enter or pin a destination.');
         return;
       }
       if (!ccNum) {
@@ -480,7 +536,7 @@
       }
       currentDestination = destInput;
       document.getElementById('dest-display').innerText = "Heading to: " + currentDestination;
-      document.getElementById('tier-fare-summary').innerText = `Applied rate tier for trip. Card payments deposit directly to driver bank accounts.`;
+      document.getElementById('tier-fare-summary').innerText = `Constituency jurisdiction applied. Card payments deposit directly to driver bank accounts.`;
       
       document.getElementById('eco-label').innerText = `RideFlow Economy (${dynamicEconomyPrice})`;
       document.getElementById('comf-label').innerText = `RideFlow Comfort (${dynamicComfortPrice})`;
@@ -499,7 +555,7 @@
         alert('Please select a vehicle tier.');
         return;
       }
-      alert(`Cashless payment authorized (${selectedVehicleTier.price} for ${selectedVehicleTier.tierName})! Funds scheduled for direct deposit to driver bank account. Finding your matched driver...`);
+      alert(`Cashless payment authorized (${selectedVehicleTier.price} for ${selectedVehicleTier.tierName})! Funds scheduled for direct deposit to driver bank account. Matching driver...`);
       switchView('rider-tracking-view');
     }
 
