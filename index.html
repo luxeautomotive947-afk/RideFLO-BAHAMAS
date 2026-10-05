@@ -180,7 +180,7 @@
     <button class="back-btn" onclick="switchView('landing-view')" ontouchstart="switchView('landing-view')">← Back</button>
     <div class="card">
       <h3>Where are you heading?</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Type constituency/corridor or click map pin to evaluate fare jurisdictions.</p>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Type constituency/corridor or click map pin to evaluate progressive outer-skirt fares.</p>
       
       <!-- Interactive Pin-Drop Map -->
       <div id="destination-picker-map" class="map-container"></div>
@@ -412,7 +412,7 @@
           maxZoom: 19
         }).addTo(destinationPickerMap);
 
-        // Click on map to drop destination pin & evaluate constituency boundaries
+        // Click on map to drop destination pin & evaluate constituency boundaries & progressive distance
         destinationPickerMap.on('click', function(e) {
           const lat = e.latlng.lat;
           const lng = e.latlng.lng;
@@ -424,10 +424,15 @@
           destPinMarker = L.marker([lat, lng]).addTo(destinationPickerMap)
             .bindPopup('Dropped Pin Constituency').openPopup();
 
+          // Calculate distance from center Nassau (-77.3963, 25.0343) in approximate kilometers for progressive scaling
+          const centerLng = -77.3963;
+          const centerLat = 25.0343;
+          const approxDistKm = Math.sqrt(Math.pow(lng - centerLng, 2) + Math.pow(lat - centerLat, 2)) * 111;
+
           // Coordinate mapping for New Providence constituencies
           let constituencyName = "";
           if (lng < -77.45) {
-            constituencyName = "Clifton / Far West (Past Killarency +$25)";
+            constituencyName = "Clifton / Far West (Progressive Distance)";
           } else if (lng < -77.42) {
             constituencyName = "Killarney Constituency";
           } else if (lng < -77.40 && lat < 25.03) {
@@ -452,7 +457,7 @@
             constituencyName = "Downtown / Center Nassau (Inner City)";
           }
 
-          document.getElementById('dest-loc').value = constituencyName;
+          document.getElementById('dest-loc').value = constituencyName + ` (~${Math.round(approxDistKm)} km out)`;
           evaluateConstituencyJurisdiction();
         });
       } else {
@@ -477,7 +482,7 @@
       }
     }
 
-    // Evaluate Constituency Jurisdictions (Outer Skirts vs Inner City + $25 Killarney extra rule)
+    // Evaluate Constituency Jurisdictions (Outer Skirts with progressive distance scaling)
     function evaluateConstituencyJurisdiction() {
       const inputVal = document.getElementById('dest-loc').value.trim().toLowerCase();
       const box = document.getElementById('fare-estimate-box');
@@ -507,25 +512,28 @@
       }
 
       if (isOuterSkirt) {
-        // Real-Time Distance Calculation for Outer Skirts
-        let baseFactor = 22 + (inputVal.length * 1.5);
-        let surchargeText = "Outer Skirt Constituency Real-Time Rate";
+        // Progressive Distance Scaling: Fare increases continuously as distance/length increases
+        let charLengthFactor = inputVal.length;
+        let distanceMultiplier = 2.8;
 
-        // Rule: Anything further than Killarney adds additional $25
-        if (inputVal.includes("clifton") || inputVal.includes("far west") || (inputVal.includes("killarney") && inputVal.includes("further"))) {
-          baseFactor += 25;
-          surchargeText = "Outer Skirt (Further than Killarney +$25 Surcharge Added)";
+        // Extract km tag if generated from map pin drop
+        if (inputVal.includes("km out")) {
+          const match = inputVal.match(/~(\d+)\s*km out/);
+          if (match && match[1]) {
+            charLengthFactor = parseInt(match[1]) * 2.5;
+          }
         }
 
-        const ecoVal = Math.round(baseFactor);
+        let baseFactor = 18 + (charLengthFactor * distanceMultiplier);
+        const ecoVal = Math.max(22, Math.round(baseFactor));
         const comfVal = Math.round(ecoVal * 1.4);
 
         dynamicEconomyPrice = `$${ecoVal}.00`;
         dynamicComfortPrice = `$${comfVal}.00`;
 
-        titleElem.innerText = `📍 Outer Skirt Constituency:`;
+        titleElem.innerText = `📍 Outer Skirt Constituency (Progressive Distance Fare):`;
         textElem.innerText = `Economy: ${dynamicEconomyPrice}  |  Comfort: ${dynamicComfortPrice}`;
-        descElem.innerText = surchargeText;
+        descElem.innerText = "Fare scales progressively and continuously as the trip goes further outward.";
       } else {
         // Inner-City Flat Rate
         dynamicEconomyPrice = "$15.00";
