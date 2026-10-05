@@ -180,17 +180,17 @@
     <button class="back-btn" onclick="switchView('landing-view')" ontouchstart="switchView('landing-view')">← Back</button>
     <div class="card">
       <h3>Where are you heading?</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Type constituency or click map pin. Off-peak hours get an automatic 15% discount!</p>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Tap anywhere on the map to set your destination pin in miles. Off-peak hours get an automatic 15% discount!</p>
       
       <!-- Interactive Pin-Drop Map -->
       <div id="destination-picker-map" class="map-container"></div>
-      <p style="font-size: 11px; color: #c5a059; margin-top: -10px; margin-bottom: 15px; text-align: center;">📍 Tap map to set pickup/destination constituency</p>
+      <p id="map-instruction-label" style="font-size: 11px; color: #c5a059; margin-top: -10px; margin-bottom: 15px; text-align: center;">📍 Tap map to set destination drop-off</p>
 
       <label>Pickup Location</label>
-      <input type="text" id="pickup-loc" value="Central Nassau">
+      <input type="text" id="pickup-loc" value="Central Nassau" readonly>
 
-      <label>Destination (Constituency / Landmark)</label>
-      <input type="text" id="dest-loc" placeholder="e.g., Killarney, Clifton, Airport..." oninput="evaluateConstituencyJurisdiction()">
+      <label>Destination Drop-off Address / Landmark</label>
+      <input type="text" id="dest-loc" placeholder="Tap map to calculate distance in miles..." readonly>
 
       <!-- Fare Estimate Box -->
       <div id="fare-estimate-box" style="background: #1a2233; padding: 12px; border-radius: 8px; border: 1px dashed #c5a059; margin-bottom: 15px; display: none;">
@@ -384,6 +384,10 @@
     let currentRating = 0;
     let driverBadReviewsCount = parseInt(localStorage.getItem('driver_bad_reviews') || '0');
 
+    // Central Nassau pickup coordinates
+    const pickupLat = 25.0343;
+    const pickupLng = -77.3963;
+
     function switchView(viewId) {
       document.getElementById('landing-view').style.display = 'none';
       document.getElementById('rider-destination-view').style.display = 'none';
@@ -405,14 +409,14 @@
     // Initialize Pin-Drop Destination Map (Center: Nassau, Bahamas)
     function initDestinationPickerMap() {
       if (!destinationPickerMap) {
-        destinationPickerMap = L.map('destination-picker-map').setView([25.0343, -77.3963], 12);
+        destinationPickerMap = L.map('destination-picker-map').setView([pickupLat, pickupLng], 12);
         
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '&copy; OpenStreetMap contributors',
           maxZoom: 19
         }).addTo(destinationPickerMap);
 
-        // Click on map to drop destination pin & evaluate outer skirts
+        // Click on map to drop destination pin & calculate distance in miles
         destinationPickerMap.on('click', function(e) {
           const lat = e.latlng.lat;
           const lng = e.latlng.lng;
@@ -422,44 +426,34 @@
           }
           
           destPinMarker = L.marker([lat, lng]).addTo(destinationPickerMap)
-            .bindPopup('Dropped Pin Constituency').openPopup();
+            .bindPopup('Dropped Pin Drop-off').openPopup();
 
-          // Coordinate mapping for New Providence constituencies & Airport zone
-          let constituencyName = "";
-          if (lng < -77.53) {
-            constituencyName = "Beyond Airport / Far West Zone";
-          } else if (lng >= -77.53 && lng < -77.48) {
-            constituencyName = "Airport / Lynden Pindling International Area";
-          } else if (lng < -77.42) {
-            constituencyName = "Killarney Constituency";
-          } else if (lng < -77.40 && lat < 25.03) {
-            constituencyName = "Golden Isles Constituency";
-          } else if (lng > -77.37 && lat < 25.02) {
-            constituencyName = "Southern Shores Constituency";
-          } else if (lng > -77.34 && lat < 25.01) {
-            constituencyName = "South Beach Constituency";
-          } else if (lng > -77.31 && lat < 25.03) {
-            constituencyName = "Seabreeze Constituency";
-          } else if (lng > -77.30 && lat > 25.03 && lat < 25.05) {
-            constituencyName = "Yamacraw Constituency";
-          } else if (lng > -77.31 && lat > 25.05) {
-            constituencyName = "Elizabeth Estates Constituency";
-          } else if (lng > -77.32 && lng < -77.30 && lat > 25.06) {
-            constituencyName = "St. Anne’s Constituency";
-          } else if (lng > -77.33 && lng < -77.32 && lat > 25.06) {
-            constituencyName = "Montagu Constituency";
-          } else if (lng > -77.30 && lat > 25.04 && lat < 25.06) {
-            constituencyName = "Fox Hill Constituency";
-          } else {
-            constituencyName = "Downtown / Center Nassau (Inner City)";
-          }
-
-          document.getElementById('dest-loc').value = constituencyName;
-          evaluateConstituencyJurisdiction();
+          // Calculate distance in miles using Haversine formula
+          const distanceMiles = calculateDistanceMiles(pickupLat, pickupLng, lat, lng);
+          
+          document.getElementById('dest-loc').value = `Dropped Pin Drop-off (${distanceMiles.toFixed(1)} miles away)`;
+          evaluateDistancePricing(distanceMiles);
         });
       } else {
         destinationPickerMap.invalidateSize();
       }
+    }
+
+    // Helper: Haversine distance formula returning miles
+    function calculateDistanceMiles(lat1, lon1, lat2, lon2) {
+      const R = 3958.8; // Radius of the earth in miles
+      const dLat = deg2rad(lat2 - lat1);
+      const dLon = deg2rad(lon2 - lon1);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    function deg2rad(deg) {
+      return deg * (Math.PI / 180);
     }
 
     function initActiveTripMap() {
@@ -479,38 +473,18 @@
       }
     }
 
-    // Evaluate Constituency Jurisdictions + Time-Based Peak/Off-Peak Multiplier Engine
-    function evaluateConstituencyJurisdiction() {
-      const inputVal = document.getElementById('dest-loc').value.trim().toLowerCase();
+    // Evaluate Distance Pricing (Miles) + Time-Based Peak/Off-Peak Multiplier Engine
+    function evaluateDistancePricing(distanceMiles) {
       const box = document.getElementById('fare-estimate-box');
       const titleElem = document.getElementById('fare-mode-title');
       const textElem = document.getElementById('estimated-fare-text');
       const descElem = document.getElementById('fare-mode-desc');
 
-      if (inputVal.length < 3) {
-        box.style.display = 'none';
-        return;
-      }
+      // Base fare calculation based on miles ($10 base + $2.50 per mile for Economy)
+      let baseEco = 10 + (distanceMiles * 2.50);
+      let baseComf = baseEco * 1.4;
 
-      // 1. Determine Base Fare based on Outer Skirts vs Inner City
-      const outerConstituencies = [
-        "killarney", "clifton", "golden isles", "southern shores", 
-        "elizabeth estates", "south beach", "seabreeze", "yamacraw", 
-        "st. anne", "montagu", "fox hill", "airport", "beyond airport"
-      ];
-
-      let isOuterSkirt = false;
-      for (let c of outerConstituencies) {
-        if (inputVal.includes(c)) {
-          isOuterSkirt = true;
-          break;
-        }
-      }
-
-      let baseEco = isOuterSkirt ? (22 + (inputVal.length * 1.5)) : 15;
-      let baseComf = isOuterSkirt ? (baseEco * 1.4) : 25;
-
-      // 2. Time-Based Peak & Off-Peak Pricing Calculation
+      // Time-Based Peak & Off-Peak Pricing Calculation
       const now = new Date();
       const currentHour = now.getHours();
       const currentMinute = now.getMinutes();
@@ -535,12 +509,10 @@
       const ecoVal = Math.round(baseEco * multiplier);
       const comfVal = Math.round(baseComf * multiplier);
 
-      dynamicEconomyPrice = `$${ecoVal}.00`;
-      dynamicComfortPrice = `$${comfVal}.00`;
+      dynamicEconomyPrice = `$${Math.max(ecoVal, 10)}.00`;
+      dynamicComfortPrice = `$${Math.max(comfVal, 15)}.00`;
 
-      let locationTypeTitle = isOuterSkirt ? "📍 Outer Skirt Constituency / Airport Zone:" : "🏙 Inner-City Flat Rate Jurisdiction:";
-
-      titleElem.innerText = locationTypeTitle;
+      titleElem.innerText = `📍 Distance: ${distanceMiles.toFixed(1)} Miles from Central Nassau`;
       textElem.innerText = `Economy: ${dynamicEconomyPrice}  |  Comfort: ${dynamicComfortPrice}`;
       descElem.innerText = timeLabel;
 
@@ -551,7 +523,7 @@
       const destInput = document.getElementById('dest-loc').value;
       const ccNum = document.getElementById('cc-num').value;
       if (!destInput) {
-        alert('Please enter or pin a constituency destination.');
+        alert('Please tap the map to set a drop-off destination pin.');
         return;
       }
       if (!ccNum) {
@@ -559,8 +531,8 @@
         return;
       }
       currentDestination = destInput;
-      document.getElementById('dest-display').innerText = "Heading to: " + currentDestination;
-      document.getElementById('tier-fare-summary').innerText = `Time-based jurisdiction applied. Card payments deposit directly to driver bank accounts.`;
+      document.getElementById('dest-display').innerText = "Destination: " + currentDestination;
+      document.getElementById('tier-fare-summary').innerText = `Mileage pricing applied. Card payments deposit directly to driver bank accounts.`;
       
       document.getElementById('eco-label').innerText = `RideFlow Economy (${dynamicEconomyPrice})`;
       document.getElementById('comf-label').innerText = `RideFlow Comfort (${dynamicComfortPrice})`;
@@ -623,7 +595,7 @@
       let warningMsg = `Thank you for rating! Rating submitted successfully (${currentRating}/5 stars).`;
       
       if (driverBadReviewsCount >= 5) {
-        warningMsg += `\n\n⚠️ AUTOMATED POLICY ALERT: Driver Marcus Miller has accumulated ${driverBadReviewsCount} bad reviews and is now PERMANENTLY BANNED from RideFlow Bahamas.`;
+        warningMsg += `\n\n⚠️️ AUTOMATED POLICY ALERT: Driver Marcus Miller has accumulated ${driverBadReviewsCount} bad reviews and is now PERMANENTLY BANNED from RideFlow Bahamas.`;
       } else {
         warningMsg += `\n(Driver currently has ${driverBadReviewsCount}/5 bad reviews toward a ban threshold).`;
       }
