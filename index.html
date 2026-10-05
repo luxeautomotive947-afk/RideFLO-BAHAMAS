@@ -180,11 +180,11 @@
     <button class="back-btn" onclick="switchView('landing-view')" ontouchstart="switchView('landing-view')">← Back</button>
     <div class="card">
       <h3>Where are you heading?</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Tap anywhere on the map to set your destination pin in miles. Off-peak hours get an automatic 15% discount!</p>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Tap anywhere on the map to calculate distance in miles. Off-peak hours get an automatic 15% discount!</p>
       
       <!-- Interactive Pin-Drop Map -->
       <div id="destination-picker-map" class="map-container"></div>
-      <p id="map-instruction-label" style="font-size: 11px; color: #c5a059; margin-top: -10px; margin-bottom: 15px; text-align: center;">📍 Tap map to set destination drop-off</p>
+      <p style="font-size: 11px; color: #c5a059; margin-top: -10px; margin-bottom: 15px; text-align: center;">📍 Tap map to set destination drop-off</p>
 
       <label>Pickup Location</label>
       <input type="text" id="pickup-loc" value="Central Nassau" readonly>
@@ -480,8 +480,8 @@
       const textElem = document.getElementById('estimated-fare-text');
       const descElem = document.getElementById('fare-mode-desc');
 
-      // Base fare calculation based on miles ($10 base + $2.50 per mile for Economy)
-      let baseEco = 10 + (distanceMiles * 2.50);
+      // Pure distance calculation: $8.00 base + $2.50 per mile for Economy
+      let baseEco = 8.00 + (distanceMiles * 2.50);
       let baseComf = baseEco * 1.4;
 
       // Time-Based Peak & Off-Peak Pricing Calculation
@@ -512,7 +512,7 @@
       dynamicEconomyPrice = `$${Math.max(ecoVal, 10)}.00`;
       dynamicComfortPrice = `$${Math.max(comfVal, 15)}.00`;
 
-      titleElem.innerText = `📍 Distance: ${distanceMiles.toFixed(1)} Miles from Central Nassau`;
+      titleElem.innerText = `📍 Distance: ${distanceMiles.toFixed(1)} Miles from Pickup`;
       textElem.innerText = `Economy: ${dynamicEconomyPrice}  |  Comfort: ${dynamicComfortPrice}`;
       descElem.innerText = timeLabel;
 
