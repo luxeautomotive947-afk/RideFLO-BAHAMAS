@@ -180,17 +180,17 @@
     <button class="back-btn" onclick="switchView('landing-view')" ontouchstart="switchView('landing-view')">← Back</button>
     <div class="card">
       <h3>Where are you heading?</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Type location or click/drop pin on the map below.</p>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Type constituency/corridor or click map pin to evaluate fare jurisdictions.</p>
       
       <!-- Interactive Pin-Drop Map -->
       <div id="destination-picker-map" class="map-container"></div>
-      <p style="font-size: 11px; color: #c5a059; margin-top: -10px; margin-bottom: 15px; text-align: center;">📍 Tap anywhere on map to drop destination pin</p>
+      <p style="font-size: 11px; color: #c5a059; margin-top: -10px; margin-bottom: 15px; text-align: center;">📍 Tap map to set pickup/destination constituency</p>
 
       <label>Pickup Location</label>
-      <input type="text" id="pickup-loc" value="Nassau (Current Location)">
+      <input type="text" id="pickup-loc" value="Central Nassau">
 
-      <label>Destination (Corridor or Pin Coordinates)</label>
-      <input type="text" id="dest-loc" placeholder="e.g., Golden Isles, Lyford Cay, Gladstone Rd..." oninput="evaluateFareByCorridor()">
+      <label>Destination (Constituency / Landmark)</label>
+      <input type="text" id="dest-loc" placeholder="e.g., Killarney, Clifton, Yamacraw..." oninput="evaluateConstituencyJurisdiction()">
 
       <!-- Fare Estimate Box -->
       <div id="fare-estimate-box" style="background: #1a2233; padding: 12px; border-radius: 8px; border: 1px dashed #c5a059; margin-bottom: 15px; display: none;">
@@ -405,14 +405,14 @@
     // Initialize Pin-Drop Destination Map (Center: Nassau, Bahamas)
     function initDestinationPickerMap() {
       if (!destinationPickerMap) {
-        destinationPickerMap = L.map('destination-picker-map').setView([25.0343, -77.3963], 13);
+        destinationPickerMap = L.map('destination-picker-map').setView([25.0343, -77.3963], 12);
         
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '&copy; OpenStreetMap contributors',
           maxZoom: 19
         }).addTo(destinationPickerMap);
 
-        // Click on map to drop destination pin & calculate fare based on coordinates/corridors
+        // Click on map to drop destination pin & evaluate constituency boundaries
         destinationPickerMap.on('click', function(e) {
           const lat = e.latlng.lat;
           const lng = e.latlng.lng;
@@ -422,22 +422,38 @@
           }
           
           destPinMarker = L.marker([lat, lng]).addTo(destinationPickerMap)
-            .bindPopup('Selected Pin Drop').openPopup();
+            .bindPopup('Dropped Pin Constituency').openPopup();
 
-          // Determine corridor based on longitude/latitude relative to center Nassau (-77.3963)
-          let detectedName = "";
-          if (lng < -77.44) {
-            detectedName = "Lyford Cay / Albany / Western Outskirt (Pin Drop)";
-          } else if (lng < -77.41) {
-            detectedName = "Golden Isles / Gladstone / Bacardi Rd West (Pin Drop)";
-          } else if (lng > -77.36) {
-            detectedName = "Bernard Rd to Soldier Rd East Outskirt (Pin Drop)";
+          // Coordinate mapping for New Providence constituencies
+          let constituencyName = "";
+          if (lng < -77.45) {
+            constituencyName = "Clifton / Far West (Past Killarency +$25)";
+          } else if (lng < -77.42) {
+            constituencyName = "Killarney Constituency";
+          } else if (lng < -77.40 && lat < 25.03) {
+            constituencyName = "Golden Isles Constituency";
+          } else if (lng > -77.37 && lat < 25.02) {
+            constituencyName = "Southern Shores Constituency";
+          } else if (lng > -77.34 && lat < 25.01) {
+            constituencyName = "South Beach Constituency";
+          } else if (lng > -77.31 && lat < 25.03) {
+            constituencyName = "Seabreeze Constituency";
+          } else if (lng > -77.30 && lat > 25.03 && lat < 25.05) {
+            constituencyName = "Yamacraw Constituency";
+          } else if (lng > -77.31 && lat > 25.05) {
+            constituencyName = "Elizabeth Estates Constituency";
+          } else if (lng > -77.32 && lng < -77.30 && lat > 25.06) {
+            constituencyName = "St. Anne’s Constituency";
+          } else if (lng > -77.33 && lng < -77.32 && lat > 25.06) {
+            constituencyName = "Montagu Constituency";
+          } else if (lng > -77.30 && lat > 25.04 && lat < 25.06) {
+            constituencyName = "Fox Hill Constituency";
           } else {
-            detectedName = "Downtown / Central Nassau (Pin Drop)";
+            constituencyName = "Downtown / Center Nassau (Inner City)";
           }
 
-          document.getElementById('dest-loc').value = detectedName;
-          evaluateFareByCorridor();
+          document.getElementById('dest-loc').value = constituencyName;
+          evaluateConstituencyJurisdiction();
         });
       } else {
         destinationPickerMap.invalidateSize();
@@ -461,8 +477,8 @@
       }
     }
 
-    // Precise Corridor & Pin-Drop Evaluation for Inner-City vs Outer Skirts
-    function evaluateFareByCorridor() {
+    // Evaluate Constituency Jurisdictions (Outer Skirts vs Inner City + $25 Killarney extra rule)
+    function evaluateConstituencyJurisdiction() {
       const inputVal = document.getElementById('dest-loc').value.trim().toLowerCase();
       const box = document.getElementById('fare-estimate-box');
       const titleElem = document.getElementById('fare-mode-title');
@@ -474,42 +490,42 @@
         return;
       }
 
-      // Specified Outer Skirt Corridors:
-      // 1. Golden Isles, Gladstone Road, Bacardi Road going west
-      // 2. Bernard Road to Soldier Road going east
-      // 3. Lyford Cay, Tropical Gardens, Albany going west
-      const isWesternOuterSkirt = inputVal.includes('golden isles') ||
-                                   inputVal.includes('gladstone') ||
-                                   inputVal.includes('bacardi') ||
-                                   inputVal.includes('lyford cay') ||
-                                   inputVal.includes('tropical gardens') ||
-                                   inputVal.includes('albany') ||
-                                   inputVal.includes('old fort bay') ||
-                                   inputVal.includes('airport');
+      // Specified Outer Skirt Constituencies:
+      // Killarney, Clifton, Golden Isles, Southern Shores, Elizabeth Estates, South Beach, Seabreeze, Yamacraw, St. Anne’s, Montagu, Fox Hill
+      const outerConstituencies = [
+        "killarney", "clifton", "golden isles", "southern shores", 
+        "elizabeth estates", "south beach", "seabreeze", "yamacraw", 
+        "st. anne", "montagu", "fox hill"
+      ];
 
-      const isEasternOuterSkirt = inputVal.includes('bernard') ||
-                                   inputVal.includes('soldier road') ||
-                                   inputVal.includes('fox hill') ||
-                                   inputVal.includes('mackey street east');
+      let isOuterSkirt = false;
+      for (let c of outerConstituencies) {
+        if (inputVal.includes(c)) {
+          isOuterSkirt = true;
+          break;
+        }
+      }
 
-      const isPinDropOuter = inputVal.includes('western outskirt') || inputVal.includes('east outskirt');
+      if (isOuterSkirt) {
+        // Real-Time Distance Calculation for Outer Skirts
+        let baseFactor = 22 + (inputVal.length * 1.5);
+        let surchargeText = "Outer Skirt Constituency Real-Time Rate";
 
-      if (isWesternOuterSkirt || isEasternOuterSkirt || isPinDropOuter) {
-        // Outer Skirt Real-Time Calculation
-        let baseFactor = inputVal.length * 2.1 + 20;
-        if (isWesternOuterSkirt && (inputVal.includes('lyford') || inputVal.includes('albany'))) {
-          baseFactor += 16; // Extended western distance surcharge
+        // Rule: Anything further than Killarney adds additional $25
+        if (inputVal.includes("clifton") || inputVal.includes("far west") || (inputVal.includes("killarney") && inputVal.includes("further"))) {
+          baseFactor += 25;
+          surchargeText = "Outer Skirt (Further than Killarney +$25 Surcharge Added)";
         }
 
-        const ecoVal = Math.max(24, Math.round(baseFactor));
-        const comfVal = Math.round(ecoVal * 1.45);
+        const ecoVal = Math.round(baseFactor);
+        const comfVal = Math.round(ecoVal * 1.4);
 
         dynamicEconomyPrice = `$${ecoVal}.00`;
         dynamicComfortPrice = `$${comfVal}.00`;
 
-        titleElem.innerText = "📍 Outer Skirt Real-Time Jurisdiction Fare:";
+        titleElem.innerText = `📍 Outer Skirt Constituency:`;
         textElem.innerText = `Economy: ${dynamicEconomyPrice}  |  Comfort: ${dynamicComfortPrice}`;
-        descElem.innerText = "Calculated via mapped outer corridor boundary rules (Golden Isles/Gladstone/Bacardi/Bernard/Soldier/Lyford/Albany).";
+        descElem.innerText = surchargeText;
       } else {
         // Inner-City Flat Rate
         dynamicEconomyPrice = "$15.00";
@@ -517,7 +533,7 @@
 
         titleElem.innerText = "🏙️ Inner-City Flat Rate Jurisdiction:";
         textElem.innerText = `Economy: ${dynamicEconomyPrice}  |  Comfort: ${dynamicComfortPrice}`;
-        descElem.innerText = "Downtown and central constituency flat-rate transit.";
+        descElem.innerText = "Standard predictable flat rate for central urban Nassau.";
       }
 
       box.style.display = 'block';
@@ -527,7 +543,7 @@
       const destInput = document.getElementById('dest-loc').value;
       const ccNum = document.getElementById('cc-num').value;
       if (!destInput) {
-        alert('Please enter or pin a destination.');
+        alert('Please enter or pin a constituency destination.');
         return;
       }
       if (!ccNum) {
