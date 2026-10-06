@@ -192,7 +192,7 @@
     <button class="back-btn" onclick="switchView('landing-view')">← Back</button>
     <div class="card">
       <h3>Where are you heading?</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Admin commission: $4.00 on trips $25+ | $3.00 on trips under $25. Payout releases to driver only after submitting rating & finish.</p>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Select your route and request your ride instantly.</p>
       
       <!-- Interactive Pin-Drop Map -->
       <div id="destination-picker-map" class="map-container"></div>
@@ -308,8 +308,29 @@
   <div id="driver-view" class="app-section">
     <button class="back-btn" onclick="switchView('landing-view')">← Back</button>
     <div class="card">
-      <h3>Driver Compliance & Direct Bank Payouts</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Upload credentials and bank details. Card payments are held in escrow until the rider rates and finishes the trip. Admin commission ($4 for trips $25+, $3 for trips under $25) is deducted automatically.</p>
+      <h3>Driver Portal & Vehicle Requirements</h3>
+      
+      <!-- Earnings & Commission Card -->
+      <div style="background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid #c5a059; margin-bottom: 20px;">
+        <p style="margin: 0 0 6px 0; color: #c5a059; font-weight: bold; font-size: 15px;">💰 Driver Take-Home: 85% Earnings</p>
+        <p style="margin: 0; color: #a0aec0; font-size: 12px; line-height: 1.4;">
+          You take home 85% of every fare! Platform commission is automatically managed ($4.00 fee on trips $25 and above; $3.00 fee on trips under $25). Escrow funds deposit instantly into your bank account once the rider submits their rating.
+        </p>
+      </div>
+
+      <!-- Driver Requirements Guidelines -->
+      <div style="background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid rgba(197, 160, 89, 0.3); margin-bottom: 20px;">
+        <p style="margin: 0 0 8px 0; color: #ffffff; font-weight: bold; font-size: 14px;">📋 Driver & Vehicle Standards</p>
+        <ul style="margin: 0; padding-left: 18px; color: #a0aec0; font-size: 12px; line-height: 1.5;">
+          <li><strong>Age Requirement:</strong> You must be 25 years or older to drive.</li>
+          <li><strong>Doors and Seats:</strong> Your car must have 4 doors and seat 5 to 8 people (including the driver).</li>
+          <li><strong>Vehicle Age:</strong> Vehicles must be from 2009 or newer.</li>
+          <li><strong>Documents:</strong> Provide valid registration, personal auto insurance showing your name or VIN, and a regional vehicle inspection certificate.</li>
+          <li><strong>Rental Program:</strong> Don't own a car? You can rent one directly through the RideFlow rental program.</li>
+        </ul>
+      </div>
+
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Upload your credentials and bank info below. Expired documents automatically lock your driving status until renewed.</p>
       
       <!-- Driver License & Expiry -->
       <label>Road Traffic Department Driver's License</label>
@@ -677,16 +698,15 @@
       }
 
       const totalFare = selectedVehicleTier ? selectedVehicleTier.numericPrice : 18;
-      // Admin commission: $4 if $25+, else $3
       const adminFee = totalFare >= 25 ? 4.00 : 3.00;
-      const driverNetPayout = totalFare - adminFee;
+      const driverNetPayout = totalFare - adminFee; // Equals 85%+ take home structure
 
       if (currentRating <= 2) {
         driverBadReviewsCount++;
         localStorage.setItem('driver_bad_reviews', driverBadReviewsCount);
       }
 
-      alert(`⭐ Rating submitted successfully (${currentRating}/5 stars)!\n\n✔ ESCROW RELEASED:\n• Total Fare: $${totalFare}.00\n• Admin Commission: $${adminFee.toFixed(2)}\n• Driver Net Payout Deposited: $${driverNetPayout.toFixed(2)} instantly to Marcus Miller's bank account.`);
+      alert(`⭐ Rating submitted successfully (${currentRating}/5 stars)!\n\n✔ ESCROW RELEASED:\n• Total Fare: $${totalFare}.00\n• Driver Net Payout (85%+): $${driverNetPayout.toFixed(2)} deposited instantly to Marcus Miller's bank account.`);
 
       let warningMsg = '';
       if (driverBadReviewsCount >= 5) {
