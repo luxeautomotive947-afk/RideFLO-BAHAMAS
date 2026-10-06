@@ -134,6 +134,18 @@
       cursor: pointer;
       margin-top: 10px;
     }
+    .secondary-btn {
+      background: transparent;
+      color: #c5a059;
+      border: 1px solid #c5a059;
+      width: 100%;
+      padding: 10px;
+      font-weight: bold;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      margin-bottom: 15px;
+    }
     .upload-box {
       border: 2px dashed rgba(197, 160, 89, 0.5);
       padding: 12px;
@@ -180,17 +192,26 @@
     <button class="back-btn" onclick="switchView('landing-view')">← Back</button>
     <div class="card">
       <h3>Where are you heading?</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Tap map or type destination for real-time fare pricing.</p>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Send your GPS location, tap map, or type stops ($4.75/mi).</p>
       
       <!-- Interactive Pin-Drop Map -->
       <div id="destination-picker-map" class="map-container"></div>
-      <p style="font-size: 11px; color: #c5a059; margin-top: -10px; margin-bottom: 15px; text-align: center;">📍 Tap map to calculate fare</p>
+      <p style="font-size: 11px; color: #c5a059; margin-top: -10px; margin-bottom: 15px; text-align: center;">📍 Tap map to set destination pin</p>
 
-      <label>Pickup Location (Editable)</label>
-      <input type="text" id="pickup-loc" value="Central Nassau, Bahamas">
+      <!-- Pickup Location with GPS Button -->
+      <label>Pickup Location</label>
+      <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+        <input type="text" id="pickup-loc" value="Central Nassau, Bahamas" style="margin-bottom: 0;">
+        <button type="button" onclick="useCurrentLocationGPS()" style="background: #1a2233; color: #c5a059; border: 1px solid #c5a059; padding: 0 12px; border-radius: 8px; font-weight: bold; cursor: pointer; white-space: nowrap; font-size: 12px;">📍 Use GPS</button>
+      </div>
 
-      <label>Destination Drop-off Address / Landmark</label>
-      <input type="text" id="dest-loc" placeholder="Tap map or type destination..." oninput="simulateRealtimeTextFare()">
+      <!-- Dynamic Stops Container -->
+      <label>Destination Drop-off & Stops</label>
+      <div id="stops-container">
+        <input type="text" class="stop-input" placeholder="Drop-off address or landmark..." value="Baha Mar, Cable Beach" oninput="calculateRealtimeFare()">
+      </div>
+      
+      <button type="button" class="secondary-btn" onclick="addStopField()">+ Add Stop</button>
 
       <!-- Real-Time Fare Estimate Box -->
       <div id="fare-estimate-box" style="background: #1a2233; padding: 12px; border-radius: 8px; border: 1px dashed #c5a059; margin-bottom: 15px; display: none;">
@@ -372,7 +393,7 @@
 
   <script>
     let selectedVehicleTier = null;
-    let currentDestination = '';
+    let currentDestinationSummary = '';
     let dynamicEconomyPrice = "$18.00";
     let dynamicComfortPrice = "$28.00";
     let destinationPickerMap = null;
@@ -382,9 +403,10 @@
     let currentRating = 0;
     let driverBadReviewsCount = parseInt(localStorage.getItem('driver_bad_reviews') || '0');
 
-    // Central Nassau Pickup Coordinates
-    const pickupLat = 25.0343;
-    const pickupLng = -77.3963;
+    // Default pickup coordinates (Central Nassau)
+    let pickupLat = 25.0343;
+    let pickupLng = -77.3963;
+    let currentCalculatedMiles = 3.5;
 
     // Robust event listeners upon DOM load for landing buttons
     document.addEventListener("DOMContentLoaded", function() {
@@ -404,6 +426,9 @@
           switchView("driver-view");
         });
       }
+      
+      // Initial fare calculation on load
+      calculateRealtimeFare();
     });
 
     function switchView(viewId) {
@@ -444,13 +469,48 @@
           destPinMarker = L.marker([lat, lng]).addTo(destinationPickerMap)
             .bindPopup('Dropped Pin Drop-off').openPopup();
 
-          const distanceMiles = calculateDistanceMiles(pickupLat, pickupLng, lat, lng);
-          document.getElementById('dest-loc').value = `Dropped Pin Drop-off (${distanceMiles.toFixed(1)} miles away)`;
-          calculateRealtimeFare(distanceMiles);
+          currentCalculatedMiles = calculateDistanceMiles(pickupLat, pickupLng, lat, lng);
+          
+          // Put dropped pin location into the first stop input
+          const stopInputs = document.querySelectorAll('.stop-input');
+          if (stopInputs.length > 0) {
+            stopInputs[0].value = `Dropped Pin (${currentCalculatedMiles.toFixed(1)} miles away)`;
+          }
+          calculateRealtimeFare();
         });
       } else {
         destinationPickerMap.invalidateSize();
       }
+    }
+
+    function useCurrentLocationGPS() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          pickupLat = position.coords.latitude;
+          pickupLng = position.coords.longitude;
+          document.getElementById('pickup-loc').value = `GPS Location (${pickupLat.toFixed(4)}, ${pickupLng.toFixed(4)})`;
+          alert('📍 Your current GPS location has been successfully set as the pickup point!');
+          calculateRealtimeFare();
+        }, function(error) {
+          alert('Unable to retrieve your location via GPS. Please check permissions.');
+        });
+      } else {
+        alert('Geolocation is not supported by your browser.');
+      }
+    }
+
+    function addStopField() {
+      const container = document.getElementById('stops-container');
+      const inputCount = container.querySelectorAll('.stop-input').length + 1;
+      
+      const newInput = document.createElement('input');
+      newInput.type = 'text';
+      newInput.className = 'stop-input';
+      newInput.placeholder = `Stop #${inputCount} address or landmark...`;
+      newInput.setAttribute('oninput', 'calculateRealtimeFare()');
+      
+      container.appendChild(newInput);
+      calculateRealtimeFare();
     }
 
     function calculateDistanceMiles(lat1, lon1, lat2, lon2) {
@@ -469,20 +529,29 @@
       return deg * (Math.PI / 180);
     }
 
-    function simulateRealtimeTextFare() {
-      const textVal = document.getElementById('dest-loc').value;
-      if (textVal.length > 2 && !textVal.includes("miles away")) {
-        const estimatedMiles = Math.max(2.0, textVal.length * 0.4);
-        calculateRealtimeFare(estimatedMiles);
-      }
-    }
-
-    function calculateRealtimeFare(distanceMiles) {
+    function calculateRealtimeFare() {
       const box = document.getElementById('fare-estimate-box');
       const textElem = document.getElementById('estimated-fare-text');
+      
+      // Count total stops and add distance per extra stop
+      const stopInputs = document.querySelectorAll('.stop-input');
+      let totalStopsCount = 0;
+      let combinedStopsText = [];
+      
+      stopInputs.forEach(input => {
+        if (input.value.trim() !== "") {
+          totalStopsCount++;
+          combinedStopsText.push(input.value.trim());
+        }
+      });
+
+      currentDestinationSummary = combinedStopsText.join(" ➔ Stop: ");
+
+      // Base miles + extra mileage per additional stop
+      let effectiveMiles = currentCalculatedMiles + ((totalStopsCount > 1 ? totalStopsCount - 1 : 0) * 2.0);
 
       // Formula: $8.00 base + $4.75 per mile
-      let baseEco = 8.00 + (distanceMiles * 4.75);
+      let baseEco = 8.00 + (effectiveMiles * 4.75);
       let baseComf = baseEco * 1.4;
 
       const now = new Date();
@@ -504,20 +573,24 @@
       dynamicEconomyPrice = `$${Math.max(ecoVal, 10)}.00`;
       dynamicComfortPrice = `$${Math.max(comfVal, 15)}.00`;
 
-      textElem.innerText = `Economy: ${dynamicEconomyPrice}  |  Comfort: ${dynamicComfortPrice}`;
-      box.style.display = 'block';
+      if (combinedStopsText.length > 0) {
+        textElem.innerText = `Economy: ${dynamicEconomyPrice}  |  Comfort: ${dynamicComfortPrice}`;
+        box.style.display = 'block';
+      } else {
+        box.style.display = 'none';
+      }
     }
 
     function initActiveTripMap() {
       if (!activeTripMap) {
-        activeTripMap = L.map('active-trip-map').setView([25.0343, -77.3963], 14);
+        activeTripMap = L.map('active-trip-map').setView([pickupLat, pickupLng], 14);
         
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '&copy; OpenStreetMap contributors',
           maxZoom: 19
         }).addTo(activeTripMap);
 
-        driverMarker = L.marker([25.0383, -77.3900]).addTo(activeTripMap)
+        driverMarker = L.marker([pickupLat + 0.004, pickupLng + 0.003]).addTo(activeTripMap)
           .bindPopup('<b>Driver:</b> Marcus Miller<br><b>Car:</b> Toyota Corolla (E-12948)')
           .openPopup();
       } else {
@@ -526,19 +599,17 @@
     }
 
     function proceedToRideSelection() {
-      const destInput = document.getElementById('dest-loc').value;
-      const ccNum = document.getElementById('cc-num').value;
-      if (!destInput) {
-        alert('Please tap the map or type a destination drop-off address.');
+      if (!currentDestinationSummary) {
+        alert('Please enter at least one drop-off stop or pin on the map.');
         return;
       }
+      const ccNum = document.getElementById('cc-num').value;
       if (!ccNum) {
         alert('Please enter valid credit card details for cashless checkout.');
         return;
       }
-      currentDestination = destInput;
 
-      document.getElementById('dest-display').innerText = "Destination: " + currentDestination;
+      document.getElementById('dest-display').innerText = "Route Stops: " + currentDestinationSummary;
       document.getElementById('tier-fare-summary').innerText = `Real-time fare calculated. Card payments deposit directly to driver bank accounts.`;
       
       document.getElementById('eco-label').innerText = `RideFlow Economy (${dynamicEconomyPrice})`;
