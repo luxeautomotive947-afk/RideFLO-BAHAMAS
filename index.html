@@ -3,92 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>RideFlow Bahamas</title>
-  <!-- Leaflet CSS for Real Map -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <title>RideFlow Bahamas - Admin Portal</title>
   <style>
     body {
-      background: linear-gradient(rgba(9, 13, 22, 0.85), rgba(9, 13, 22, 0.95)), 
-                  url('https://images.unsplash.com/photo-1582967788606-a171c1080cb0?q=80&w=1200&auto=format&fit=crop') no-repeat center center fixed;
-      background-size: cover;
+      background: #090d16;
       color: #ffffff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       margin: 0;
-      padding: 0;
-    }
-    .landing-screen {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      text-align: center;
       padding: 20px;
-    }
-    .landing-screen h1 {
-      color: #ffffff;
-      font-size: 26px;
-      margin-bottom: 8px;
-      letter-spacing: 1px;
-    }
-    .landing-screen p {
-      color: #a0aec0;
-      font-size: 14px;
-      margin-bottom: 25px;
-    }
-    .btn-main-group {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      width: 100%;
-      max-width: 300px;
-    }
-    .btn-ride-main {
-      background: #c5a059;
-      color: #090d16;
-      padding: 16px;
-      font-weight: bold;
-      border-radius: 10px;
-      font-size: 16px;
-      cursor: pointer;
-      border: none;
-      box-shadow: 0 4px 15px rgba(197, 160, 89, 0.4);
-      -webkit-tap-highlight-color: transparent;
-    }
-    .btn-driver-main {
-      background: transparent;
-      color: #c5a059;
-      border: 2px solid #c5a059;
-      padding: 15px;
-      font-weight: bold;
-      border-radius: 10px;
-      font-size: 16px;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .admin-link {
-      margin-top: 40px;
-      color: #4a5568;
-      font-size: 11px;
-      background: none;
-      border: none;
-      cursor: pointer;
-      text-decoration: underline;
-    }
-    .app-section {
-      display: none;
-      padding: 20px;
-      max-width: 600px;
-      margin: 0 auto;
-      min-height: 100vh;
-      box-sizing: border-box;
     }
     .card {
       background: #121824;
       border: 1px solid #c5a059;
       border-radius: 12px;
       padding: 20px;
-      margin-bottom: 20px;
+      max-width: 500px;
+      margin: 40px auto;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     }
     .back-btn {
@@ -108,7 +38,7 @@
       margin-bottom: 6px;
       font-weight: bold;
     }
-    input, textarea, select {
+    input {
       width: 100%;
       padding: 12px;
       background: #1a2233;
@@ -118,18 +48,6 @@
       font-size: 14px;
       margin-bottom: 15px;
       box-sizing: border-box;
-    }
-    .tier-option {
-      background: #1a2233;
-      padding: 12px;
-      border-radius: 8px;
-      margin-top: 10px;
-      border: 1px solid rgba(197, 160, 89, 0.3);
-      cursor: pointer;
-    }
-    .tier-option.selected {
-      border-color: #c5a059;
-      background: #222d44;
     }
     .action-btn {
       background: #c5a059;
@@ -153,383 +71,101 @@
       border-radius: 8px;
       font-size: 13px;
       cursor: pointer;
-      margin-bottom: 15px;
-    }
-    .upload-box {
-      border: 2px dashed rgba(197, 160, 89, 0.5);
-      padding: 12px;
-      text-align: center;
-      border-radius: 8px;
-      background: #1a2233;
-      margin-bottom: 15px;
-      cursor: pointer;
-    }
-    .map-container {
-      width: 100%;
-      height: 220px;
-      border-radius: 8px;
-      border: 1px solid rgba(197, 160, 89, 0.4);
-      margin-bottom: 15px;
-      z-index: 1;
-    }
-    .star {
-      font-size: 28px;
-      cursor: pointer;
-      color: #4a5568;
-    }
-    .star.active {
-      color: #c5a059;
+      margin-top: 12px;
     }
   </style>
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 
-  <!-- Landing Selection Screen -->
-  <div id="landing-view" class="landing-screen">
-    <h1>RideFlow Bahamas</h1>
-    <p>Select your experience to get started</p>
-    <div class="btn-main-group">
-      <button id="btn-request-ride" class="btn-ride-main">Request Ride</button>
-      <button id="btn-become-driver" class="btn-driver-main">Become a Driver</button>
-    </div>
-    <button class="admin-link" onclick="openAdminPortal()">⚙ Admin Portal (Restricted)</button>
-  </div>
-
   <!-- Admin Secure Passcode View -->
-  <div id="admin-login-view" class="app-section">
-    <button class="back-btn" onclick="switchView('landing-view')">← Back</button>
-    <div class="card" style="max-width: 400px; margin: 40px auto;">
-      <h3 style="color: #c5a059; margin-top: 0;">Admin Authentication</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Enter admin passcode to access backend management.</p>
-      <label>Passcode</label>
-      <input type="password" id="admin-passcode" placeholder="Enter passcode (admin2026)">
-      <button class="action-btn" onclick="verifyAdminLogin()">Access Dashboard</button>
-    </div>
+  <div id="admin-login-view" class="card">
+    <h3 style="color: #c5a059; margin-top: 0;">Admin Authentication</h3>
+    <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Enter master admin passcode to access confidential platform backend.</p>
+    <label>Passcode</label>
+    <input type="password" id="admin-passcode" placeholder="Enter passcode (admin2026)">
+    <button class="action-btn" onclick="verifyAdminLogin()">Access Dashboard</button>
   </div>
 
-  <!-- Admin Dashboard View (Hidden from riders/drivers) -->
-  <div id="admin-dashboard-view" class="app-section">
-    <button class="back-btn" onclick="switchView('landing-view')">← Logout Admin</button>
-    <div class="card">
-      <h3 style="color: #c5a059; margin-top: 0;">🛡 RideFlow Admin Control Center</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 20px;">Confidential master management view for platform financials, driver compliance, and support tickets.</p>
+  <!-- Admin Dashboard View -->
+  <div id="admin-dashboard-view" class="card" style="display: none; max-width: 600px;">
+    <button class="back-btn" onclick="lockAdmin()">🔒 Lock Admin Portal</button>
+    <h3 style="color: #c5a059; margin-top: 0;">🛡 RideFlow Admin Control Center</h3>
+    <p style="color: #a0aec0; font-size: 13px; margin-bottom: 20px;">Confidential master management view hidden securely from riders and drivers.</p>
 
-      <!-- Financial Metrics Box -->
-      <div style="background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid #c5a059; margin-bottom: 20px;">
-        <h4 style="margin: 0 0 10px 0; color: #c5a059; font-size: 14px;">📊 Financial Summary</h4>
-        <p style="margin: 0 0 5px 0; font-size: 13px; color: #ffffff;"><strong>Total Platform Revenue (Escrow Handled):</strong> <span id="admin-total-rev">$142.00</span></p>
-        <p style="margin: 0 0 5px 0; font-size: 13px; color: #48bb78;"><strong>Total Admin Commission Earned:</strong> <span id="admin-total-comm">$21.00</span></p>
-        <p style="margin: 0; font-size: 13px; color: #a0aec0;"><strong>Total Driver Payouts Settled:</strong> <span id="admin-total-payout">$121.00</span></p>
-      </div>
-
-      <!-- Driver Fleet Oversight -->
-      <div style="background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid rgba(197, 160, 89, 0.4); margin-bottom: 20px;">
-        <h4 style="margin: 0 0 10px 0; color: #c5a059; font-size: 14px;">🚗 Active Driver Fleet Status</h4>
-        <div style="font-size: 12px; color: #a0aec0; line-height: 1.6;">
-          <p style="margin: 0;"><strong>Name:</strong> Marcus Miller (Plate: E-12948)</p>
-          <p style="margin: 0;"><strong>Bank Account:</strong> RBC Royal Bank Bahamas (••••4829)</p>
-          <p style="margin: 0;"><strong>Compliance Documents:</strong> <span style="color: #48bb78;">Active & Verified ($75 Paid)</span></p>
-          <p style="margin: 0;"><strong>Bad Reviews Count:</strong> <span id="admin-bad-reviews-display" style="color: #e53e3e; font-weight: bold;">0</span> / 5 threshold</p>
-        </div>
-        <button class="secondary-btn" style="margin-top: 12px; margin-bottom: 0;" onclick="resetDriverStrikes()">Reset Driver Strikes / Lift Ban</button>
-      </div>
-
-      <!-- Lost & Found Support Log -->
-      <div style="background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid rgba(197, 160, 89, 0.4);">
-        <h4 style="margin: 0 0 10px 0; color: #c5a059; font-size: 14px;">📦 Lost & Found Admin Log</h4>
-        <div id="admin-lost-log" style="font-size: 12px; color: #ffffff; background: #090d16; padding: 10px; border-radius: 6px; min-height: 50px;">
-          No active lost item reports currently logged.
-        </div>
-      </div>
+    <!-- Financial Metrics Box -->
+    <div style="background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid #c5a059; margin-bottom: 20px;">
+      <h4 style="margin: 0 0 10px 0; color: #c5a059; font-size: 14px;">📊 Financial Summary</h4>
+      <p style="margin: 0 0 5px 0; font-size: 13px; color: #ffffff;"><strong>Total Platform Revenue (Escrow Handled):</strong> <span id="admin-total-rev">$142.00</span></p>
+      <p style="margin: 0 0 5px 0; font-size: 13px; color: #48bb78;"><strong>Total Admin Commission Earned:</strong> <span id="admin-total-comm">$21.00</span></p>
+      <p style="margin: 0; font-size: 13px; color: #a0aec0;"><strong>Total Driver Payouts Settled:</strong> <span id="admin-total-payout">$121.00</span></p>
     </div>
-  </div>
 
-  <!-- Step 1: Choose Destination & Stops View -->
-  <div id="rider-destination-view" class="app-section">
-    <button class="back-btn" onclick="switchView('landing-view')">← Back</button>
-    <div class="card">
-      <h3>Where are you heading?</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Select your route and request your ride instantly.</p>
-      
-      <!-- Interactive Pin-Drop Map -->
-      <div id="destination-picker-map" class="map-container"></div>
-      <p style="font-size: 11px; color: #c5a059; margin-top: -10px; margin-bottom: 15px; text-align: center;">📍 Tap map to set drop-off stop</p>
-
-      <!-- Pickup Location with GPS Button -->
-      <label>Pickup Location</label>
-      <div style="display: flex; gap: 8px; margin-bottom: 15px;">
-        <input type="text" id="pickup-loc" value="Central Nassau, Bahamas" style="margin-bottom: 0;">
-        <button type="button" onclick="useCurrentLocationGPS()" style="background: #1a2233; color: #c5a059; border: 1px solid #c5a059; padding: 0 12px; border-radius: 8px; font-weight: bold; cursor: pointer; white-space: nowrap; font-size: 12px;">📍 Use GPS</button>
+    <!-- Driver Fleet Oversight -->
+    <div style="background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid rgba(197, 160, 89, 0.4); margin-bottom: 20px;">
+      <h4 style="margin: 0 0 10px 0; color: #c5a059; font-size: 14px;">🚗 Active Driver Fleet Status</h4>
+      <div style="font-size: 12px; color: #a0aec0; line-height: 1.6;">
+        <p style="margin: 0;"><strong>Name:</strong> Marcus Miller (Plate: E-12948)</p>
+        <p style="margin: 0;"><strong>Bank Account:</strong> RBC Royal Bank Bahamas (••••4829)</p>
+        <p style="margin: 0;"><strong>Compliance Documents:</strong> <span style="color: #48bb78;">Active & Verified ($75 Paid)</span></p>
+        <p style="margin: 0;"><strong>Bad Reviews Count:</strong> <span id="admin-bad-reviews-display" style="color: #e53e3e; font-weight: bold;">0</span> / 5 threshold</p>
       </div>
-
-      <!-- Dynamic Stops Container -->
-      <label>Destination Drop-off & Stops</label>
-      <div id="stops-container">
-        <input type="text" class="stop-input" placeholder="Drop-off address or landmark..." value="Baha Mar, Cable Beach" oninput="calculateRealtimeFare()">
-      </div>
-      
-      <button type="button" class="secondary-btn" onclick="addStopField()">+ Add Stop</button>
-
-      <!-- Real-Time Fare Estimate Box -->
-      <div id="fare-estimate-box" style="background: #1a2233; padding: 12px; border-radius: 8px; border: 1px dashed #c5a059; margin-bottom: 15px; display: none;">
-        <p id="estimated-fare-text" style="margin: 0; font-size: 18px; color: #ffffff; font-weight: bold; text-align: center;"></p>
-      </div>
-
-      <h4 style="color: #c5a059; margin: 15px 0 8px 0; font-size: 14px;">Cashless Escrow Payment</h4>
-      <label>Card Number</label>
-      <input type="text" id="cc-num" value="4242 •••• •••• 4242">
-      
-      <div style="display: flex; gap: 10px;">
-        <div>
-          <label>Exp Date</label>
-          <input type="text" id="cc-exp" value="12/28">
-        </div>
-        <div>
-          <label>CVV</label>
-          <input type="text" id="cc-cvv" value="888">
-        </div>
-      </div>
-
-      <button class="action-btn" onclick="proceedToRideSelection()">Continue to Ride Selection</button>
+      <button class="secondary-btn" onclick="resetDriverStrikes()">Reset Driver Strikes / Lift Ban</button>
     </div>
-  </div>
 
-  <!-- Step 2: Choose Ride Tier View -->
-  <div id="rider-tier-view" class="app-section">
-    <button class="back-btn" onclick="switchView('rider-destination-view')">← Back</button>
-    <div class="card">
-      <h3>Select Vehicle Tier</h3>
-      <p id="dest-display" style="color: #c5a059; font-size: 14px; margin-bottom: 5px; font-weight: bold;"></p>
-      <p id="tier-fare-summary" style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;"></p>
-
-      <div class="tier-option" onclick="selectTier(this, 'Economy', dynamicEconomyPrice, numericEcoVal)">
-        <strong id="eco-label">RideFlow Economy</strong>
-        <p id="eco-desc" style="margin: 4px 0 0 0; font-size: 13px; color: #a0aec0;">Standard compact vehicle</p>
+    <!-- Lost & Found Support Log -->
+    <div style="background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid rgba(197, 160, 89, 0.4);">
+      <h4 style="margin: 0 0 10px 0; color: #c5a059; font-size: 14px;">📦 Lost & Found Admin Log</h4>
+      <div id="admin-lost-log" style="font-size: 12px; color: #ffffff; background: #090d16; padding: 10px; border-radius: 6px; min-height: 50px;">
+        No active lost item reports currently logged.
       </div>
-      <div class="tier-option" onclick="selectTier(this, 'Comfort', dynamicComfortPrice, numericComfVal)" style="margin-top: 10px;">
-        <strong id="comf-label">RideFlow Comfort</strong>
-        <p id="comf-desc" style="margin: 4px 0 0 0; font-size: 13px; color: #a0aec0;">Mid-size sedan with AC</p>
-      </div>
-
-      <button class="action-btn" onclick="confirmRideRequest()">Authorize Escrow & Request Ride</button>
-    </div>
-  </div>
-
-  <!-- Step 3: Real-Time Live Tracking & Arrival View -->
-  <div id="rider-tracking-view" class="app-section">
-    <div class="card">
-      <h3 style="color: #48bb78; margin-top: 0;">Driver En Route (Real-Time Tracking)</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Funds held in escrow. Arrive at destination to unlock rating and release payout.</p>
-      
-      <div id="active-trip-map" class="map-container"></div>
-
-      <div style="background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid rgba(197, 160, 89, 0.4); margin-bottom: 15px;">
-        <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Driver:</strong> Marcus Miller</p>
-        <p style="margin: 0 0 8px 0; font-size: 13px; color: #a0aec0;"><strong>License ID:</strong> BS-849201</p>
-        <hr style="border: 0; border-top: 1px solid rgba(197, 160, 89, 0.2); margin: 10px 0;">
-        <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Vehicle:</strong> Toyota Corolla (Silver)</p>
-        <p style="margin: 0; font-size: 14px; color: #c5a059; font-weight: bold;">License Plate: E-12948</p>
-      </div>
-
-      <button class="action-btn" style="background: #48bb78; color: #090d16; margin-bottom: 10px;" onclick="arriveAtDestination()">Arrived at Destination / Rate Driver</button>
-      <button class="action-btn" style="background: #e53e3e; color: #ffffff;" onclick="cancelRide()">Cancel Ride ($9.00 Fee)</button>
-    </div>
-  </div>
-
-  <!-- Step 4: Post-Ride Rating & Payout Release View -->
-  <div id="rider-feedback-view" class="app-section">
-    <div class="card" style="text-align: center;">
-      <h3 style="color: #c5a059; margin-top: 0;">Trip Completed</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Please rate your driver, Marcus Miller. <strong>Submitting your rating releases funds to the driver's bank account.</strong></p>
-      
-      <div id="star-container" style="margin-bottom: 20px;">
-        <span class="star" onclick="setRating(1)">★</span>
-        <span class="star" onclick="setRating(2)">★</span>
-        <span class="star" onclick="setRating(3)">★</span>
-        <span class="star" onclick="setRating(4)">★</span>
-        <span class="star" onclick="setRating(5)">★</span>
-      </div>
-
-      <div style="text-align: left; background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid rgba(197, 160, 89, 0.3); margin-bottom: 15px;">
-        <label style="color: #c5a059;">Left Something in the Vehicle?</label>
-        <p style="font-size: 12px; color: #a0aec0; margin-top: 0;">Describe what you left behind to text admin support.</p>
-        <textarea id="lost-item-desc" rows="2" placeholder="e.g., Black leather wallet..."></textarea>
-        <button class="action-btn" style="background: #2b6cb0; padding: 10px; font-size: 13px; margin-top: 5px;" onclick="reportLostItem()">Text Admin About Lost Item</button>
-      </div>
-
-      <button class="action-btn" onclick="submitRatingAndFinish()">Submit Rating & Finish (Release Payout)</button>
-    </div>
-  </div>
-
-  <!-- Driver Section View -->
-  <div id="driver-view" class="app-section">
-    <button class="back-btn" onclick="switchView('landing-view')">← Back</button>
-    <div class="card">
-      <h3>Driver Portal & Vehicle Requirements</h3>
-      
-      <!-- Earnings & Commission Card -->
-      <div style="background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid #c5a059; margin-bottom: 20px;">
-        <p style="margin: 0 0 6px 0; color: #c5a059; font-weight: bold; font-size: 15px;">💰 Driver Take-Home: 85% Earnings</p>
-        <p style="margin: 0; color: #a0aec0; font-size: 12px; line-height: 1.4;">
-          You take home 85% of every fare! Platform commission is automatically managed ($4.00 fee on trips $25 and above; $3.00 fee on trips under $25). Escrow funds deposit instantly into your bank account once the rider submits their rating.
-        </p>
-      </div>
-
-      <!-- Driver Requirements Guidelines -->
-      <div style="background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid rgba(197, 160, 89, 0.3); margin-bottom: 20px;">
-        <p style="margin: 0 0 8px 0; color: #ffffff; font-weight: bold; font-size: 14px;">📋 Driver & Vehicle Standards</p>
-        <ul style="margin: 0; padding-left: 18px; color: #a0aec0; font-size: 12px; line-height: 1.5;">
-          <li><strong>Age Requirement:</strong> You must be 25 years or older to drive.</li>
-          <li><strong>Doors and Seats:</strong> Your car must have 4 doors and seat 5 to 8 people (including the driver).</li>
-          <li><strong>Vehicle Age:</strong> Vehicles must be from 2009 or newer.</li>
-          <li><strong>Documents:</strong> Provide valid registration, personal auto insurance showing your name or VIN, and a regional vehicle inspection certificate.</li>
-          <li><strong>Rental Program:</strong> Don't own a car? You can rent one directly through the RideFlow rental program.</li>
-        </ul>
-      </div>
-
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Upload your credentials and bank info below. Expired documents automatically lock your driving status until renewed.</p>
-      
-      <!-- Driver License & Expiry -->
-      <label>Road Traffic Department Driver's License</label>
-      <div class="upload-box" onclick="document.getElementById('license-file').click()">
-        <span style="color: #c5a059; font-weight: bold; font-size: 13px;">📁 Upload Driver's License</span>
-        <input type="file" id="license-file" style="display:none;" onchange="updateFileName('license-file', 'license-status')">
-        <p id="license-status" style="margin: 3px 0 0 0; font-size: 11px; color: #a0aec0;">No file chosen</p>
-      </div>
-      <label>License Expiration Date</label>
-      <input type="date" id="lic-exp-date" value="2027-12-31">
-
-      <!-- Vehicle License / Inspection Expiry -->
-      <label>Vehicle License (Road Traffic Inspection)</label>
-      <div class="upload-box" onclick="document.getElementById('inspection-file').click()">
-        <span style="color: #c5a059; font-weight: bold; font-size: 13px;">📁 Upload Vehicle Inspection / License</span>
-        <input type="file" id="inspection-file" style="display:none;" onchange="updateFileName('inspection-file', 'inspection-status')">
-        <p id="inspection-status" style="margin: 3px 0 0 0; font-size: 11px; color: #a0aec0;">No file chosen</p>
-      </div>
-      <label>Vehicle License Expiration Date</label>
-      <input type="date" id="veh-exp-date" value="2027-12-31">
-
-      <!-- Insurance Expiry -->
-      <label>Vehicle Insurance Certificate</label>
-      <div class="upload-box" onclick="document.getElementById('insurance-file').click()">
-        <span style="color: #c5a059; font-weight: bold; font-size: 13px;">📁 Upload Insurance Document</span>
-        <input type="file" id="insurance-file" style="display:none;" onchange="updateFileName('insurance-file', 'insurance-status')">
-        <p id="insurance-status" style="margin: 3px 0 0 0; font-size: 11px; color: #a0aec0;">No file chosen</p>
-      </div>
-      <label>Insurance Expiration Date</label>
-      <input type="date" id="ins-exp-date" value="2027-12-31">
-
-      <!-- Police Record -->
-      <label>Police Character Record (Certificate)</label>
-      <div class="upload-box" onclick="document.getElementById('police-file').click()">
-        <span style="color: #c5a059; font-weight: bold; font-size: 13px;">📁 Upload Police Record</span>
-        <input type="file" id="police-file" style="display:none;" onchange="updateFileName('police-file', 'police-status')">
-        <p id="police-status" style="margin: 3px 0 0 0; font-size: 11px; color: #a0aec0;">No file chosen</p>
-      </div>
-
-      <hr style="border: 0; border-top: 1px solid rgba(197, 160, 89, 0.3); margin: 20px 0;">
-
-      <!-- Direct Bank Account Payout Configuration -->
-      <label style="color: #c5a059; font-size: 14px;">Direct Bank Payout Destination</label>
-      <select id="bank-name">
-        <option value="RBC Royal Bank Bahamas">RBC Royal Bank Bahamas</option>
-        <option value="CIBC Caribbean (FirstCaribbean)">CIBC Caribbean (FirstCaribbean)</option>
-        <option value="Bank of Nova Scotia (Scotiabank)">Bank of Nova Scotia (Scotiabank)</option>
-        <option value="Commonwealth Bank">Commonwealth Bank</option>
-        <option value="FINCO">FINCO</option>
-        <option value="Bahamas First / Other Local Bank">Other Local Bank / Credit Union</option>
-      </select>
-
-      <label>Bank Account Number</label>
-      <input type="text" id="bank-acc-num" placeholder="Enter your bank account number">
-
-      <label>Transit / Branch / Routing Code</label>
-      <input type="text" id="bank-routing" placeholder="Enter branch transit or routing code">
-
-      <!-- Registration & Renewal Fee Payment Section ($75.00) -->
-      <div style="background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid #c5a059; margin-top: 15px; margin-bottom: 15px;">
-        <p style="margin: 0 0 8px 0; font-size: 14px; color: #c5a059; font-weight: bold;">💳 Registration / Renewal Fee: $75.00</p>
-        <p style="margin: 0 0 10px 0; font-size: 11px; color: #a0aec0;">Covers initial registration ($50) or compliance renewal verification ($75) upon document expiry.</p>
-        <label>Driver Card Number</label>
-        <input type="text" id="driver-cc-num" value="4242 •••• •••• 4242">
-        
-        <div style="display: flex; gap: 10px;">
-          <div>
-            <label>Exp Date</label>
-            <input type="text" id="driver-cc-exp" value="12/28">
-          </div>
-          <div>
-            <label>CVV</label>
-            <input type="text" id="driver-cc-cvv" value="888">
-          </div>
-        </div>
-      </div>
-
-      <button class="action-btn" onclick="submitCredentials()">Pay $75 Fee & Link Bank Account</button>
     </div>
   </div>
 
   <script>
-    let selectedVehicleTier = null;
-    let currentDestinationSummary = '';
-    let dynamicEconomyPrice = "$18.00";
-    let dynamicComfortPrice = "$28.00";
-    let numericEcoVal = 18;
-    let numericComfVal = 28;
-    let destinationPickerMap = null;
-    let activeTripMap = null;
-    let destPinMarker = null;
-    let driverMarker = null;
-    let currentRating = 0;
     let driverBadReviewsCount = parseInt(localStorage.getItem('driver_bad_reviews') || '0');
-    let tripSimulationInterval = null;
-
     let adminTotalRevenue = parseInt(localStorage.getItem('admin_rev') || '142');
     let adminTotalCommission = parseInt(localStorage.getItem('admin_comm') || '21');
     let adminTotalPayout = parseInt(localStorage.getItem('admin_payout') || '121');
     let adminLostLogs = JSON.parse(localStorage.getItem('admin_lost_logs') || '[]');
 
-    let pickupLat = 25.0343;
-    let pickupLng = -77.3963;
-    let currentCalculatedMiles = 3.5;
-
-    document.addEventListener("DOMContentLoaded", function() {
-      const requestRideBtn = document.getElementById("btn-request-ride");
-      const becomeDriverBtn = document.getElementById("btn-become-driver");
-
-      if (requestRideBtn) {
-        requestRideBtn.addEventListener("click", function(e) {
-          e.preventDefault();
-          switchView("rider-destination-view");
-        });
-      }
-
-      if (becomeDriverBtn) {
-        becomeDriverBtn.addEventListener("click", function(e) {
-          e.preventDefault();
-          switchView("driver-view");
-        });
-      }
-      
-      calculateRealtimeFare();
-    });
-
-    function openAdminPortal() {
-      switchView('admin-login-view');
-    }
-
     function verifyAdminLogin() {
-      const code = document.getElementById('admin-passcode').value;
-      if (code === 'admin2026') {
+      const passcode = document.getElementById('admin-passcode').value;
+      if (passcode === 'admin2026') {
         document.getElementById('admin-passcode').value = '';
-        updateAdminDashboardStats();
-        switchView('admin-dashboard-view');
+        document.getElementById('admin-login-view').style.display = 'none';
+        document.getElementById('admin-dashboard-view').style.display = 'block';
+        loadDashboardData();
       } else {
         alert('❌ Incorrect admin passcode.');
       }
     }
 
-    function updateAdminDashboardStats() {
-      document.getElementById('admin-total-rev').innerText = `$${adminTotalRevenue}.00`;       document.getElementById('admin-total-comm').innerText = `$${adminTotalCommission
+    function lockAdmin() {
+      document.getElementById('admin-dashboard-view').style.display = 'none';
+      document.getElementById('admin-login-view').style.display = 'block';
+    }
+
+    function loadDashboardData() {
+      document.getElementById('admin-total-rev').innerText = `$${adminTotalRevenue}.00`;
+      document.getElementById('admin-total-comm').innerText = `$${adminTotalCommission}.00`;
+      document.getElementById('admin-total-payout').innerText = `$${adminTotalPayout}.00`;
+      document.getElementById('admin-bad-reviews-display').innerText = driverBadReviewsCount;
+
+      const logContainer = document.getElementById('admin-lost-log');
+      if (adminLostLogs.length > 0) {
+        logContainer.innerHTML = adminLostLogs.map((item, idx) => `<p style="margin: 0 0 6px 0; border-bottom: 1px solid rgba(197,160,89,0.2); padding-bottom: 4px;">#${idx+1}: ${item}</p>`).join('');
+      } else {
+        logContainer.innerHTML = "No active lost item reports currently logged.";
+      }
+    }
+
+    function resetDriverStrikes() {
+      driverBadReviewsCount = 0;
+      localStorage.setItem('driver_bad_reviews', '0');
+      alert('✔ Driver bad reviews reset to 0. Any active bans have been lifted.');
+      loadDashboardData();
+    }
+  </script>
+
+</body>
+</html>
