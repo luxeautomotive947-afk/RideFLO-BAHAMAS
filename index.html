@@ -187,16 +187,16 @@
     </div>
   </div>
 
-  <!-- Step 1: Choose Destination & Real-Time Fare Map -->
+  <!-- Step 1: Choose Destination & Stops View -->
   <div id="rider-destination-view" class="app-section">
     <button class="back-btn" onclick="switchView('landing-view')">← Back</button>
     <div class="card">
       <h3>Where are you heading?</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Send your GPS location, tap map, or type stops ($4.75/mi).</p>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Admin commission: $4.00 on trips $25+ | $3.00 on trips under $25. Payout releases to driver only after submitting rating & finish.</p>
       
       <!-- Interactive Pin-Drop Map -->
       <div id="destination-picker-map" class="map-container"></div>
-      <p style="font-size: 11px; color: #c5a059; margin-top: -10px; margin-bottom: 15px; text-align: center;">📍 Tap map to set destination pin</p>
+      <p style="font-size: 11px; color: #c5a059; margin-top: -10px; margin-bottom: 15px; text-align: center;">📍 Tap map to set drop-off stop</p>
 
       <!-- Pickup Location with GPS Button -->
       <label>Pickup Location</label>
@@ -218,7 +218,7 @@
         <p id="estimated-fare-text" style="margin: 0; font-size: 18px; color: #ffffff; font-weight: bold; text-align: center;"></p>
       </div>
 
-      <h4 style="color: #c5a059; margin: 15px 0 8px 0; font-size: 14px;">Cashless Payment (Credit/Debit Card)</h4>
+      <h4 style="color: #c5a059; margin: 15px 0 8px 0; font-size: 14px;">Cashless Escrow Payment</h4>
       <label>Card Number</label>
       <input type="text" id="cc-num" value="4242 •••• •••• 4242">
       
@@ -245,24 +245,24 @@
       <p id="dest-display" style="color: #c5a059; font-size: 14px; margin-bottom: 5px; font-weight: bold;"></p>
       <p id="tier-fare-summary" style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;"></p>
 
-      <div class="tier-option" onclick="selectTier(this, 'Economy', dynamicEconomyPrice)">
+      <div class="tier-option" onclick="selectTier(this, 'Economy', dynamicEconomyPrice, numericEcoVal)">
         <strong id="eco-label">RideFlow Economy</strong>
         <p id="eco-desc" style="margin: 4px 0 0 0; font-size: 13px; color: #a0aec0;">Standard compact vehicle</p>
       </div>
-      <div class="tier-option" onclick="selectTier(this, 'Comfort', dynamicComfortPrice)" style="margin-top: 10px;">
+      <div class="tier-option" onclick="selectTier(this, 'Comfort', dynamicComfortPrice, numericComfVal)" style="margin-top: 10px;">
         <strong id="comf-label">RideFlow Comfort</strong>
         <p id="comf-desc" style="margin: 4px 0 0 0; font-size: 13px; color: #a0aec0;">Mid-size sedan with AC</p>
       </div>
 
-      <button class="action-btn" onclick="confirmRideRequest()">Confirm & Pay Cashless</button>
+      <button class="action-btn" onclick="confirmRideRequest()">Authorize Escrow & Request Ride</button>
     </div>
   </div>
 
-  <!-- Step 3: Live Tracking & Driver Details View -->
+  <!-- Step 3: Real-Time Live Tracking & Arrival View -->
   <div id="rider-tracking-view" class="app-section">
     <div class="card">
-      <h3 style="color: #48bb78; margin-top: 0;">Driver Assigned!</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Your driver is en route. Card payment routed directly to your bank account.</p>
+      <h3 style="color: #48bb78; margin-top: 0;">Driver En Route (Real-Time Tracking)</h3>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Funds held in escrow. Arrive at destination to unlock rating and release payout.</p>
       
       <div id="active-trip-map" class="map-container"></div>
 
@@ -274,16 +274,16 @@
         <p style="margin: 0; font-size: 14px; color: #c5a059; font-weight: bold;">License Plate: E-12948</p>
       </div>
 
-      <button class="action-btn" style="background: #3182ce; color: #ffffff; margin-bottom: 10px;" onclick="simulateRideCompletion()">Simulate Ride Arrived / Complete</button>
+      <button class="action-btn" style="background: #48bb78; color: #090d16; margin-bottom: 10px;" onclick="arriveAtDestination()">Arrived at Destination / Rate Driver</button>
       <button class="action-btn" style="background: #e53e3e; color: #ffffff;" onclick="cancelRide()">Cancel Ride ($9.00 Fee)</button>
     </div>
   </div>
 
-  <!-- Step 4: Post-Ride Rating & Lost Item Support View -->
+  <!-- Step 4: Post-Ride Rating & Payout Release View -->
   <div id="rider-feedback-view" class="app-section">
     <div class="card" style="text-align: center;">
       <h3 style="color: #c5a059; margin-top: 0;">Trip Completed</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Please rate your driver, Marcus Miller.</p>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Please rate your driver, Marcus Miller. <strong>Submitting your rating releases funds to the driver's bank account.</strong></p>
       
       <div id="star-container" style="margin-bottom: 20px;">
         <span class="star" onclick="setRating(1)">★</span>
@@ -300,7 +300,7 @@
         <button class="action-btn" style="background: #2b6cb0; padding: 10px; font-size: 13px; margin-top: 5px;" onclick="reportLostItem()">Text Admin About Lost Item</button>
       </div>
 
-      <button class="action-btn" onclick="submitRatingAndFinish()">Submit Rating & Finish</button>
+      <button class="action-btn" onclick="submitRatingAndFinish()">Submit Rating & Finish (Release Payout)</button>
     </div>
   </div>
 
@@ -309,7 +309,7 @@
     <button class="back-btn" onclick="switchView('landing-view')">← Back</button>
     <div class="card">
       <h3>Driver Compliance & Direct Bank Payouts</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Upload credentials and bank details. Card payments from riders settle directly into your bank account. Expired documents automatically prohibit driving until renewed.</p>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Upload credentials and bank details. Card payments are held in escrow until the rider rates and finishes the trip. Admin commission ($4 for trips $25+, $3 for trips under $25) is deducted automatically.</p>
       
       <!-- Driver License & Expiry -->
       <label>Road Traffic Department Driver's License</label>
@@ -396,19 +396,20 @@
     let currentDestinationSummary = '';
     let dynamicEconomyPrice = "$18.00";
     let dynamicComfortPrice = "$28.00";
+    let numericEcoVal = 18;
+    let numericComfVal = 28;
     let destinationPickerMap = null;
     let activeTripMap = null;
     let destPinMarker = null;
     let driverMarker = null;
     let currentRating = 0;
     let driverBadReviewsCount = parseInt(localStorage.getItem('driver_bad_reviews') || '0');
+    let tripSimulationInterval = null;
 
-    // Default pickup coordinates (Central Nassau)
     let pickupLat = 25.0343;
     let pickupLng = -77.3963;
     let currentCalculatedMiles = 3.5;
 
-    // Robust event listeners upon DOM load for landing buttons
     document.addEventListener("DOMContentLoaded", function() {
       const requestRideBtn = document.getElementById("btn-request-ride");
       const becomeDriverBtn = document.getElementById("btn-become-driver");
@@ -427,7 +428,6 @@
         });
       }
       
-      // Initial fare calculation on load
       calculateRealtimeFare();
     });
 
@@ -471,7 +471,6 @@
 
           currentCalculatedMiles = calculateDistanceMiles(pickupLat, pickupLng, lat, lng);
           
-          // Put dropped pin location into the first stop input
           const stopInputs = document.querySelectorAll('.stop-input');
           if (stopInputs.length > 0) {
             stopInputs[0].value = `Dropped Pin (${currentCalculatedMiles.toFixed(1)} miles away)`;
@@ -514,7 +513,7 @@
     }
 
     function calculateDistanceMiles(lat1, lon1, lat2, lon2) {
-      const R = 3958.8; // Radius of the earth in miles
+      const R = 3958.8;
       const dLat = deg2rad(lat2 - lat1);
       const dLon = deg2rad(lon2 - lon1);
       const a =
@@ -533,7 +532,6 @@
       const box = document.getElementById('fare-estimate-box');
       const textElem = document.getElementById('estimated-fare-text');
       
-      // Count total stops and add distance per extra stop
       const stopInputs = document.querySelectorAll('.stop-input');
       let totalStopsCount = 0;
       let combinedStopsText = [];
@@ -546,8 +544,6 @@
       });
 
       currentDestinationSummary = combinedStopsText.join(" ➔ Stop: ");
-
-      // Base miles + extra mileage per additional stop
       let effectiveMiles = currentCalculatedMiles + ((totalStopsCount > 1 ? totalStopsCount - 1 : 0) * 2.0);
 
       // Formula: $8.00 base + $4.75 per mile
@@ -560,18 +556,17 @@
       const timeDecimal = currentHour + (currentMinute / 60);
 
       let multiplier = 1.0;
-      // Morning Rush Hour (7:00 AM – 9:30 AM) & Evening Rush Hour (4:00 PM – 6:30 PM) -> 8% Surge
       if ((timeDecimal >= 7.0 && timeDecimal <= 9.5) || (timeDecimal >= 16.0 && timeDecimal <= 18.5)) {
-        multiplier = 1.08; 
+        multiplier = 1.08; // 8% Rush hour surge
       } else {
-        multiplier = 0.97; // 3% OFF Discount for Off-Peak Hours
+        multiplier = 0.97; // 3% Off-peak discount
       }
 
-      const ecoVal = Math.round(baseEco * multiplier);
-      const comfVal = Math.round(baseComf * multiplier);
+      numericEcoVal = Math.max(Math.round(baseEco * multiplier), 10);
+      numericComfVal = Math.max(Math.round(baseComf * multiplier), 15);
 
-      dynamicEconomyPrice = `$${Math.max(ecoVal, 10)}.00`;
-      dynamicComfortPrice = `$${Math.max(comfVal, 15)}.00`;
+      dynamicEconomyPrice = `$${numericEcoVal}.00`;
+      dynamicComfortPrice = `$${numericComfVal}.00`;
 
       if (combinedStopsText.length > 0) {
         textElem.innerText = `Economy: ${dynamicEconomyPrice}  |  Comfort: ${dynamicComfortPrice}`;
@@ -590,9 +585,19 @@
           maxZoom: 19
         }).addTo(activeTripMap);
 
-        driverMarker = L.marker([pickupLat + 0.004, pickupLng + 0.003]).addTo(activeTripMap)
-          .bindPopup('<b>Driver:</b> Marcus Miller<br><b>Car:</b> Toyota Corolla (E-12948)')
+        let driverLat = pickupLat + 0.005;
+        let driverLng = pickupLng + 0.005;
+
+        driverMarker = L.marker([driverLat, driverLng]).addTo(activeTripMap)
+          .bindPopup('<b>Driver:</b> Marcus Miller (En Route)')
           .openPopup();
+
+        if (tripSimulationInterval) clearInterval(tripSimulationInterval);
+        tripSimulationInterval = setInterval(() => {
+          driverLat -= 0.0008;
+          driverLng -= 0.0008;
+          driverMarker.setLatLng([driverLat, driverLng]);
+        }, 2000);
       } else {
         activeTripMap.invalidateSize();
       }
@@ -605,12 +610,12 @@
       }
       const ccNum = document.getElementById('cc-num').value;
       if (!ccNum) {
-        alert('Please enter valid credit card details for cashless checkout.');
+        alert('Please enter valid credit card details for escrow hold.');
         return;
       }
 
       document.getElementById('dest-display').innerText = "Route Stops: " + currentDestinationSummary;
-      document.getElementById('tier-fare-summary').innerText = `Real-time fare calculated. Card payments deposit directly to driver bank accounts.`;
+      document.getElementById('tier-fare-summary').innerText = `Funds secured in escrow. Payout releases to driver only after rating is submitted.`;
       
       document.getElementById('eco-label').innerText = `RideFlow Economy (${dynamicEconomyPrice})`;
       document.getElementById('comf-label').innerText = `RideFlow Comfort (${dynamicComfortPrice})`;
@@ -618,10 +623,10 @@
       switchView('rider-tier-view');
     }
 
-    function selectTier(element, tierName, price) {
+    function selectTier(element, tierName, price, numericPrice) {
       document.querySelectorAll('.tier-option').forEach(el => el.classList.remove('selected'));
       element.classList.add('selected');
-      selectedVehicleTier = { tierName, price };
+      selectedVehicleTier = { tierName, price, numericPrice };
     }
 
     function confirmRideRequest() {
@@ -629,12 +634,18 @@
         alert('Please select a vehicle tier.');
         return;
       }
-      alert(`Cashless payment authorized (${selectedVehicleTier.price} for ${selectedVehicleTier.tierName})! Funds scheduled for direct deposit to driver bank account. Matching driver...`);
+      alert(`Escrow authorized (${selectedVehicleTier.price} for ${selectedVehicleTier.tierName}). Funds are secured. Matching driver...`);
       switchView('rider-tracking-view');
     }
 
-    function simulateRideCompletion() {
+    function arriveAtDestination() {
+      if (tripSimulationInterval) clearInterval(tripSimulationInterval);
+      alert('📍 Arrived at destination! Please rate your driver to release funds from escrow into the driver account.');
       switchView('rider-feedback-view');
+    }
+
+    function simulateRideCompletion() {
+      arriveAtDestination();
     }
 
     function setRating(stars) {
@@ -661,24 +672,28 @@
 
     function submitRatingAndFinish() {
       if (currentRating === 0) {
-        alert('Please select a star rating for your driver.');
+        alert('Please select a star rating for your driver before submitting.');
         return;
       }
+
+      const totalFare = selectedVehicleTier ? selectedVehicleTier.numericPrice : 18;
+      // Admin commission: $4 if $25+, else $3
+      const adminFee = totalFare >= 25 ? 4.00 : 3.00;
+      const driverNetPayout = totalFare - adminFee;
 
       if (currentRating <= 2) {
         driverBadReviewsCount++;
         localStorage.setItem('driver_bad_reviews', driverBadReviewsCount);
       }
 
-      let warningMsg = `Thank you for rating! Rating submitted successfully (${currentRating}/5 stars).`;
-      
+      alert(`⭐ Rating submitted successfully (${currentRating}/5 stars)!\n\n✔ ESCROW RELEASED:\n• Total Fare: $${totalFare}.00\n• Admin Commission: $${adminFee.toFixed(2)}\n• Driver Net Payout Deposited: $${driverNetPayout.toFixed(2)} instantly to Marcus Miller's bank account.`);
+
+      let warningMsg = '';
       if (driverBadReviewsCount >= 5) {
-        warningMsg += `\n\n⚠ AUTOMATED POLICY ALERT: Driver Marcus Miller has accumulated ${driverBadReviewsCount} bad reviews and is now PERMANENTLY BANNED from RideFlow Bahamas.`;
-      } else {
-        warningMsg += `\n(Driver currently has ${driverBadReviewsCount}/5 bad reviews toward a ban threshold).`;
+        warningMsg = `\n\n⚠ AUTOMATED POLICY ALERT: Driver Marcus Miller has accumulated ${driverBadReviewsCount} bad reviews and is now PERMANENTLY BANNED from RideFlow Bahamas.`;
+        alert(warningMsg);
       }
 
-      alert(warningMsg);
       currentRating = 0;
       setRating(0);
       switchView('landing-view');
@@ -731,7 +746,7 @@
         return;
       }
       
-      alert(`$75.00 fee successfully processed! Bank account linked to ${bankName}. All compliance documents verified as active. Driver status: ACTIVE & ready for direct bank deposits.`);
+      alert(`$75.00 fee successfully processed! Bank account linked to ${bankName}. All compliance documents verified as active. Driver status: ACTIVE & ready for escrow payouts upon rider rating completion.`);
       switchView('landing-view');
     }
   </script>
