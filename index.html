@@ -170,34 +170,23 @@
     <h1>RideFlow Bahamas</h1>
     <p>Select your experience to get started</p>
     <div class="btn-main-group">
-      <button class="btn-ride-main" onclick="switchView('rider-destination-view')">Request Ride</button>
-      <button class="btn-driver-main" onclick="switchView('driver-view')">Become a Driver</button>
+      <button id="btn-request-ride" class="btn-ride-main">Request Ride</button>
+      <button id="btn-become-driver" class="btn-driver-main">Become a Driver</button>
     </div>
   </div>
 
-  <!-- Step 1: Choose Destination & Pin Drop Map -->
+  <!-- Step 1: Choose Destination View -->
   <div id="rider-destination-view" class="app-section">
     <button class="back-btn" onclick="switchView('landing-view')">← Back</button>
     <div class="card">
       <h3>Where are you heading?</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Edit your pickup location or tap the map to set drop-off. Rate: $8.00 base + $5.00/mile.</p>
-      
-      <!-- Interactive Pin-Drop Map -->
-      <div id="destination-picker-map" class="map-container"></div>
-      <p style="font-size: 11px; color: #c5a059; margin-top: -10px; margin-bottom: 15px; text-align: center;">📍 Tap map to set destination pin</p>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Enter your pickup and drop-off details below. Rush hours have an 8% surge; off-peak hours get a 3% discount!</p>
 
-      <label>Pickup Location (Fully Editable)</label>
-      <input type="text" id="pickup-loc" value="Central Nassau, Bahamas" oninput="recalculateCurrentTrip()">
+      <label>Pickup Location</label>
+      <input type="text" id="pickup-loc" value="Central Nassau, Bahamas">
 
-      <label>Destination Drop-off Address / Pin</label>
-      <input type="text" id="dest-loc" placeholder="Tap map to calculate distance in miles..." readonly>
-
-      <!-- Fare Estimate Box -->
-      <div id="fare-estimate-box" style="background: #1a2233; padding: 12px; border-radius: 8px; border: 1px dashed #c5a059; margin-bottom: 15px; display: none;">
-        <p id="fare-mode-title" style="margin: 0; font-size: 13px; color: #c5a059; font-weight: bold;"></p>
-        <p id="estimated-fare-text" style="margin: 4px 0 0 0; font-size: 16px; color: #ffffff; font-weight: bold;"></p>
-        <p id="fare-mode-desc" style="margin: 4px 0 0 0; font-size: 11px; color: #a0aec0;"></p>
-      </div>
+      <label>Destination Drop-off Address / Landmark</label>
+      <input type="text" id="dest-loc" placeholder="e.g., Baha Mar, Cable Beach, Atlantis...">
 
       <h4 style="color: #c5a059; margin: 15px 0 8px 0; font-size: 14px;">Cashless Payment (Credit/Debit Card)</h4>
       <label>Card Number</label>
@@ -375,20 +364,32 @@
   <script>
     let selectedVehicleTier = null;
     let currentDestination = '';
-    let dynamicEconomyPrice = "$20.00";
-    let dynamicComfortPrice = "$30.00";
-    let destinationPickerMap = null;
+    let dynamicEconomyPrice = "$18.00";
+    let dynamicComfortPrice = "$28.00";
     let activeTripMap = null;
-    let destPinMarker = null;
     let driverMarker = null;
     let currentRating = 0;
     let driverBadReviewsCount = parseInt(localStorage.getItem('driver_bad_reviews') || '0');
 
-    // Default pickup coordinates (Central Nassau)
-    let currentPickupLat = 25.0343;
-    let currentPickupLng = -77.3963;
-    let lastSelectedDestLat = null;
-    let lastSelectedDestLng = null;
+    // Robust event listeners upon DOM load for landing buttons
+    document.addEventListener("DOMContentLoaded", function() {
+      const requestRideBtn = document.getElementById("btn-request-ride");
+      const becomeDriverBtn = document.getElementById("btn-become-driver");
+
+      if (requestRideBtn) {
+        requestRideBtn.addEventListener("click", function(e) {
+          e.preventDefault();
+          switchView("rider-destination-view");
+        });
+      }
+
+      if (becomeDriverBtn) {
+        becomeDriverBtn.addEventListener("click", function(e) {
+          e.preventDefault();
+          switchView("driver-view");
+        });
+      }
+    });
 
     function switchView(viewId) {
       document.getElementById('landing-view').style.display = 'none';
@@ -401,68 +402,9 @@
       document.getElementById(viewId).style.display = viewId === 'landing-view' ? 'flex' : 'block';
       window.scrollTo(0, 0);
 
-      if (viewId === 'rider-destination-view') {
-        setTimeout(initDestinationPickerMap, 200);
-      } else if (viewId === 'rider-tracking-view') {
+      if (viewId === 'rider-tracking-view') {
         setTimeout(initActiveTripMap, 200);
       }
-    }
-
-    // Initialize Pin-Drop Destination Map (Center: Nassau, Bahamas)
-    function initDestinationPickerMap() {
-      if (!destinationPickerMap) {
-        destinationPickerMap = L.map('destination-picker-map').setView([currentPickupLat, currentPickupLng], 12);
-        
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenStreetMap contributors',
-          maxZoom: 19
-        }).addTo(destinationPickerMap);
-
-        // Click on map to drop destination pin & calculate distance in miles ($5/mile)
-        destinationPickerMap.on('click', function(e) {
-          const lat = e.latlng.lat;
-          const lng = e.latlng.lng;
-          
-          lastSelectedDestLat = lat;
-          lastSelectedDestLng = lng;
-
-          if (destPinMarker) {
-            destinationPickerMap.removeLayer(destPinMarker);
-          }
-          
-          destPinMarker = L.marker([lat, lng]).addTo(destinationPickerMap)
-            .bindPopup('Dropped Pin Drop-off').openPopup();
-
-          recalculateCurrentTrip();
-        });
-      } else {
-        destinationPickerMap.invalidateSize();
-      }
-    }
-
-    function recalculateCurrentTrip() {
-      if (lastSelectedDestLat === null || lastSelectedDestLng === null) return;
-
-      const distanceMiles = calculateDistanceMiles(currentPickupLat, currentPickupLng, lastSelectedDestLat, lastSelectedDestLng);
-      document.getElementById('dest-loc').value = `Dropped Pin Drop-off (${distanceMiles.toFixed(1)} miles away)`;
-      evaluateDistancePricing(distanceMiles);
-    }
-
-    // Helper: Haversine distance formula returning miles
-    function calculateDistanceMiles(lat1, lon1, lat2, lon2) {
-      const R = 3958.8; // Radius of the earth in miles
-      const dLat = deg2rad(lat2 - lat1);
-      const dLon = deg2rad(lon2 - lon1);
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c;
-    }
-
-    function deg2rad(deg) {
-      return deg * (Math.PI / 180);
     }
 
     function initActiveTripMap() {
@@ -482,15 +424,9 @@
       }
     }
 
-    // Evaluate Distance Pricing ($8 base + $5.00 / mile) + Time-Based Peak/Off-Peak Multiplier Engine
-    function evaluateDistancePricing(distanceMiles) {
-      const box = document.getElementById('fare-estimate-box');
-      const titleElem = document.getElementById('fare-mode-title');
-      const textElem = document.getElementById('estimated-fare-text');
-      const descElem = document.getElementById('fare-mode-desc');
-
-      let baseEco = 8.00 + (distanceMiles * 5.00);
-      let baseComf = baseEco * 1.4;
+    function evaluateTimeBasedPricing() {
+      let baseEco = 18.00;
+      let baseComf = 28.00;
 
       const now = new Date();
       const currentHour = now.getHours();
@@ -500,12 +436,10 @@
       let multiplier = 1.0;
       let timeLabel = "Standard Rate";
 
-      if (timeDecimal >= 7.0 && timeDecimal <= 9.5) {
-        multiplier = 1.10; // +10% Surge
-        timeLabel = "Morning Rush Hour Surge (+10%)";
-      } else if (timeDecimal >= 16.0 && timeDecimal <= 18.5) {
-        multiplier = 1.15; // +15% Surge
-        timeLabel = "Evening Rush Hour Surge (+15%)";
+      // Morning Rush Hour (7:00 AM – 9:30 AM) & Evening Rush Hour (4:00 PM – 6:30 PM) -> 8% Surge
+      if ((timeDecimal >= 7.0 && timeDecimal <= 9.5) || (timeDecimal >= 16.0 && timeDecimal <= 18.5)) {
+        multiplier = 1.08; 
+        timeLabel = "Rush Hour Surge (+8%)";
       } else {
         multiplier = 0.97; // 3% OFF Discount for Off-Peak Hours
         timeLabel = "🌟 Off-Peak Discount Applied (3% OFF)";
@@ -514,21 +448,17 @@
       const ecoVal = Math.round(baseEco * multiplier);
       const comfVal = Math.round(baseComf * multiplier);
 
-      dynamicEconomyPrice = `$${Math.max(ecoVal, 10)}.00`;
-      dynamicComfortPrice = `$${Math.max(comfVal, 15)}.00`;
+      dynamicEconomyPrice = `$${ecoVal}.00`;
+      dynamicComfortPrice = `$${comfVal}.00`;
 
-      titleElem.innerText = `📍 Distance: ${distanceMiles.toFixed(1)} Miles | Rate: $8 Base + $5.00/mi`;
-      textElem.innerText = `Economy: ${dynamicEconomyPrice}  |  Comfort: ${dynamicComfortPrice}`;
-      descElem.innerText = timeLabel;
-
-      box.style.display = 'block';
+      return timeLabel;
     }
 
     function proceedToRideSelection() {
       const destInput = document.getElementById('dest-loc').value;
       const ccNum = document.getElementById('cc-num').value;
       if (!destInput) {
-        alert('Please tap the map to set a drop-off destination pin.');
+        alert('Please enter a destination drop-off address or landmark.');
         return;
       }
       if (!ccNum) {
@@ -536,8 +466,11 @@
         return;
       }
       currentDestination = destInput;
+      
+      const timeLabel = evaluateTimeBasedPricing();
+
       document.getElementById('dest-display').innerText = "Destination: " + currentDestination;
-      document.getElementById('tier-fare-summary').innerText = `Mileage pricing applied ($5.00/mile). Card payments deposit directly to driver bank accounts.`;
+      document.getElementById('tier-fare-summary').innerText = `Rate status: ${timeLabel}. Card payments deposit directly to driver bank accounts.`;
       
       document.getElementById('eco-label').innerText = `RideFlow Economy (${dynamicEconomyPrice})`;
       document.getElementById('comf-label').innerText = `RideFlow Comfort (${dynamicComfortPrice})`;
