@@ -175,18 +175,22 @@
     </div>
   </div>
 
-  <!-- Step 1: Choose Destination View -->
+  <!-- Step 1: Choose Destination & Pin Drop Map -->
   <div id="rider-destination-view" class="app-section">
     <button class="back-btn" onclick="switchView('landing-view')">← Back</button>
     <div class="card">
       <h3>Where are you heading?</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Enter your pickup and drop-off details below. Rush hours have an 8% surge; off-peak hours get a 3% discount!</p>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Tap anywhere on the map to drop a destination pin, or type your destination below.</p>
+      
+      <!-- Interactive Pin-Drop Map -->
+      <div id="destination-picker-map" class="map-container"></div>
+      <p style="font-size: 11px; color: #c5a059; margin-top: -10px; margin-bottom: 15px; text-align: center;">📍 Tap map to set destination pin</p>
 
-      <label>Pickup Location</label>
+      <label>Pickup Location (Editable)</label>
       <input type="text" id="pickup-loc" value="Central Nassau, Bahamas">
 
       <label>Destination Drop-off Address / Landmark</label>
-      <input type="text" id="dest-loc" placeholder="e.g., Baha Mar, Cable Beach, Atlantis...">
+      <input type="text" id="dest-loc" placeholder="Tap map or type destination...">
 
       <h4 style="color: #c5a059; margin: 15px 0 8px 0; font-size: 14px;">Cashless Payment (Credit/Debit Card)</h4>
       <label>Card Number</label>
@@ -366,7 +370,9 @@
     let currentDestination = '';
     let dynamicEconomyPrice = "$18.00";
     let dynamicComfortPrice = "$28.00";
+    let destinationPickerMap = null;
     let activeTripMap = null;
+    let destPinMarker = null;
     let driverMarker = null;
     let currentRating = 0;
     let driverBadReviewsCount = parseInt(localStorage.getItem('driver_bad_reviews') || '0');
@@ -402,8 +408,37 @@
       document.getElementById(viewId).style.display = viewId === 'landing-view' ? 'flex' : 'block';
       window.scrollTo(0, 0);
 
-      if (viewId === 'rider-tracking-view') {
+      if (viewId === 'rider-destination-view') {
+        setTimeout(initDestinationPickerMap, 200);
+      } else if (viewId === 'rider-tracking-view') {
         setTimeout(initActiveTripMap, 200);
+      }
+    }
+
+    function initDestinationPickerMap() {
+      if (!destinationPickerMap) {
+        destinationPickerMap = L.map('destination-picker-map').setView([25.0343, -77.3963], 12);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap contributors',
+          maxZoom: 19
+        }).addTo(destinationPickerMap);
+
+        destinationPickerMap.on('click', function(e) {
+          const lat = e.latlng.lat;
+          const lng = e.latlng.lng;
+          
+          if (destPinMarker) {
+            destinationPickerMap.removeLayer(destPinMarker);
+          }
+          
+          destPinMarker = L.marker([lat, lng]).addTo(destinationPickerMap)
+            .bindPopup('Dropped Pin Drop-off').openPopup();
+
+          document.getElementById('dest-loc').value = `Dropped Pin (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+        });
+      } else {
+        destinationPickerMap.invalidateSize();
       }
     }
 
@@ -458,7 +493,7 @@
       const destInput = document.getElementById('dest-loc').value;
       const ccNum = document.getElementById('cc-num').value;
       if (!destInput) {
-        alert('Please enter a destination drop-off address or landmark.');
+        alert('Please tap the map or type a destination drop-off address.');
         return;
       }
       if (!ccNum) {
