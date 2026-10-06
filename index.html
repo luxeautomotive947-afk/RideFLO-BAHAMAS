@@ -180,7 +180,7 @@
     <button class="back-btn" onclick="switchView('landing-view')" ontouchstart="switchView('landing-view')">← Back</button>
     <div class="card">
       <h3>Where are you heading?</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Tap anywhere on the map to calculate distance at $5.00 per mile. Off-peak hours get an automatic 15% discount!</p>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Tap anywhere on the map to calculate distance at $5.00 per mile. Off-peak hours get an automatic 3% discount!</p>
       
       <!-- Interactive Pin-Drop Map -->
       <div id="destination-picker-map" class="map-container"></div>
@@ -375,8 +375,8 @@
   <script>
     let selectedVehicleTier = null;
     let currentDestination = '';
-    let dynamicEconomyPrice = "$18.00";
-    let dynamicComfortPrice = "$28.00";
+    let dynamicEconomyPrice = "$20.00";
+    let dynamicComfortPrice = "$30.00";
     let destinationPickerMap = null;
     let activeTripMap = null;
     let destPinMarker = null;
@@ -502,8 +502,8 @@
         multiplier = 1.15; // +15% Surge
         timeLabel = "Evening Rush Hour Surge (+15%)";
       } else {
-        multiplier = 0.85; // 15% OFF Discount for Before/After Rush Hours (Off-Peak)
-        timeLabel = "🌟 Off-Peak Discount Applied (15% OFF Before/After Rush Hours)";
+        multiplier = 0.97; // 3% OFF Discount for Off-Peak Hours
+        timeLabel = "🌟 Off-Peak Discount Applied (3% OFF)";
       }
 
       const ecoVal = Math.round(baseEco * multiplier);
