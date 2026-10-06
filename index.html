@@ -481,8 +481,8 @@
       const box = document.getElementById('fare-estimate-box');
       const textElem = document.getElementById('estimated-fare-text');
 
-      // Formula: $8.00 base + $3.00 per mile
-      let baseEco = 8.00 + (distanceMiles * 3.00);
+      // Formula: $8.00 base + $4.75 per mile
+      let baseEco = 8.00 + (distanceMiles * 4.75);
       let baseComf = baseEco * 1.4;
 
       const now = new Date();
@@ -502,7 +502,7 @@
       const comfVal = Math.round(baseComf * multiplier);
 
       dynamicEconomyPrice = `$${Math.max(ecoVal, 10)}.00`;
-      dynamicComfortPrice = `$${Math.max(comfVal, 14)}.00`;
+      dynamicComfortPrice = `$${Math.max(comfVal, 15)}.00`;
 
       textElem.innerText = `Economy: ${dynamicEconomyPrice}  |  Comfort: ${dynamicComfortPrice}`;
       box.style.display = 'block';
