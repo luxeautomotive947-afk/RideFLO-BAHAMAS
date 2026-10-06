@@ -175,22 +175,27 @@
     </div>
   </div>
 
-  <!-- Step 1: Choose Destination & Pin Drop Map -->
+  <!-- Step 1: Choose Destination & Real-Time Fare Map -->
   <div id="rider-destination-view" class="app-section">
     <button class="back-btn" onclick="switchView('landing-view')">← Back</button>
     <div class="card">
       <h3>Where are you heading?</h3>
-      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Tap anywhere on the map to drop a destination pin, or type your destination below.</p>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Tap map or type destination for real-time fare pricing.</p>
       
       <!-- Interactive Pin-Drop Map -->
       <div id="destination-picker-map" class="map-container"></div>
-      <p style="font-size: 11px; color: #c5a059; margin-top: -10px; margin-bottom: 15px; text-align: center;">📍 Tap map to set destination pin</p>
+      <p style="font-size: 11px; color: #c5a059; margin-top: -10px; margin-bottom: 15px; text-align: center;">📍 Tap map to calculate fare</p>
 
       <label>Pickup Location (Editable)</label>
       <input type="text" id="pickup-loc" value="Central Nassau, Bahamas">
 
       <label>Destination Drop-off Address / Landmark</label>
-      <input type="text" id="dest-loc" placeholder="Tap map or type destination...">
+      <input type="text" id="dest-loc" placeholder="Tap map or type destination..." oninput="simulateRealtimeTextFare()">
+
+      <!-- Real-Time Fare Estimate Box -->
+      <div id="fare-estimate-box" style="background: #1a2233; padding: 12px; border-radius: 8px; border: 1px dashed #c5a059; margin-bottom: 15px; display: none;">
+        <p id="estimated-fare-text" style="margin: 0; font-size: 18px; color: #ffffff; font-weight: bold; text-align: center;"></p>
+      </div>
 
       <h4 style="color: #c5a059; margin: 15px 0 8px 0; font-size: 14px;">Cashless Payment (Credit/Debit Card)</h4>
       <label>Card Number</label>
@@ -377,6 +382,10 @@
     let currentRating = 0;
     let driverBadReviewsCount = parseInt(localStorage.getItem('driver_bad_reviews') || '0');
 
+    // Central Nassau Pickup Coordinates
+    const pickupLat = 25.0343;
+    const pickupLng = -77.3963;
+
     // Robust event listeners upon DOM load for landing buttons
     document.addEventListener("DOMContentLoaded", function() {
       const requestRideBtn = document.getElementById("btn-request-ride");
@@ -417,7 +426,7 @@
 
     function initDestinationPickerMap() {
       if (!destinationPickerMap) {
-        destinationPickerMap = L.map('destination-picker-map').setView([25.0343, -77.3963], 12);
+        destinationPickerMap = L.map('destination-picker-map').setView([pickupLat, pickupLng], 12);
         
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '&copy; OpenStreetMap contributors',
@@ -435,11 +444,68 @@
           destPinMarker = L.marker([lat, lng]).addTo(destinationPickerMap)
             .bindPopup('Dropped Pin Drop-off').openPopup();
 
-          document.getElementById('dest-loc').value = `Dropped Pin (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+          const distanceMiles = calculateDistanceMiles(pickupLat, pickupLng, lat, lng);
+          document.getElementById('dest-loc').value = `Dropped Pin Drop-off (${distanceMiles.toFixed(1)} miles away)`;
+          calculateRealtimeFare(distanceMiles);
         });
       } else {
         destinationPickerMap.invalidateSize();
       }
+    }
+
+    function calculateDistanceMiles(lat1, lon1, lat2, lon2) {
+      const R = 3958.8; // Radius of the earth in miles
+      const dLat = deg2rad(lat2 - lat1);
+      const dLon = deg2rad(lon2 - lon1);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    function deg2rad(deg) {
+      return deg * (Math.PI / 180);
+    }
+
+    function simulateRealtimeTextFare() {
+      const textVal = document.getElementById('dest-loc').value;
+      if (textVal.length > 2 && !textVal.includes("miles away")) {
+        const estimatedMiles = Math.max(2.0, textVal.length * 0.4);
+        calculateRealtimeFare(estimatedMiles);
+      }
+    }
+
+    function calculateRealtimeFare(distanceMiles) {
+      const box = document.getElementById('fare-estimate-box');
+      const textElem = document.getElementById('estimated-fare-text');
+
+      // Formula: $8.00 base + $1.85 per mile
+      let baseEco = 8.00 + (distanceMiles * 1.85);
+      let baseComf = baseEco * 1.4;
+
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const timeDecimal = currentHour + (currentMinute / 60);
+
+      let multiplier = 1.0;
+      // Morning Rush Hour (7:00 AM – 9:30 AM) & Evening Rush Hour (4:00 PM – 6:30 PM) -> 8% Surge
+      if ((timeDecimal >= 7.0 && timeDecimal <= 9.5) || (timeDecimal >= 16.0 && timeDecimal <= 18.5)) {
+        multiplier = 1.08; 
+      } else {
+        multiplier = 0.97; // 3% OFF Discount for Off-Peak Hours
+      }
+
+      const ecoVal = Math.round(baseEco * multiplier);
+      const comfVal = Math.round(baseComf * multiplier);
+
+      dynamicEconomyPrice = `$${Math.max(ecoVal, 10)}.00`;
+      dynamicComfortPrice = `$${Math.max(comfVal, 14)}.00`;
+
+      textElem.innerText = `Economy: ${dynamicEconomyPrice}  |  Comfort: ${dynamicComfortPrice}`;
+      box.style.display = 'block';
     }
 
     function initActiveTripMap() {
@@ -459,36 +525,6 @@
       }
     }
 
-    function evaluateTimeBasedPricing() {
-      let baseEco = 18.00;
-      let baseComf = 28.00;
-
-      const now = new Date();
-      const currentHour = now.getHours();
-      const currentMinute = now.getMinutes();
-      const timeDecimal = currentHour + (currentMinute / 60);
-
-      let multiplier = 1.0;
-      let timeLabel = "Standard Rate";
-
-      // Morning Rush Hour (7:00 AM – 9:30 AM) & Evening Rush Hour (4:00 PM – 6:30 PM) -> 8% Surge
-      if ((timeDecimal >= 7.0 && timeDecimal <= 9.5) || (timeDecimal >= 16.0 && timeDecimal <= 18.5)) {
-        multiplier = 1.08; 
-        timeLabel = "Rush Hour Surge (+8%)";
-      } else {
-        multiplier = 0.97; // 3% OFF Discount for Off-Peak Hours
-        timeLabel = "🌟 Off-Peak Discount Applied (3% OFF)";
-      }
-
-      const ecoVal = Math.round(baseEco * multiplier);
-      const comfVal = Math.round(baseComf * multiplier);
-
-      dynamicEconomyPrice = `$${ecoVal}.00`;
-      dynamicComfortPrice = `$${comfVal}.00`;
-
-      return timeLabel;
-    }
-
     function proceedToRideSelection() {
       const destInput = document.getElementById('dest-loc').value;
       const ccNum = document.getElementById('cc-num').value;
@@ -501,11 +537,9 @@
         return;
       }
       currentDestination = destInput;
-      
-      const timeLabel = evaluateTimeBasedPricing();
 
       document.getElementById('dest-display').innerText = "Destination: " + currentDestination;
-      document.getElementById('tier-fare-summary').innerText = `Rate status: ${timeLabel}. Card payments deposit directly to driver bank accounts.`;
+      document.getElementById('tier-fare-summary').innerText = `Real-time fare calculated. Card payments deposit directly to driver bank accounts.`;
       
       document.getElementById('eco-label').innerText = `RideFlow Economy (${dynamicEconomyPrice})`;
       document.getElementById('comf-label').innerText = `RideFlow Comfort (${dynamicComfortPrice})`;
