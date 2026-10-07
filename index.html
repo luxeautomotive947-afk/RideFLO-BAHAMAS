@@ -8,9 +8,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     body {
-      background: linear-gradient(rgba(9, 13, 22, 0.85), rgba(9, 13, 22, 0.95)), 
-                  url('https://images.unsplash.com/photo-1582967788606-a171c1080cb0?q=80&w=1200&auto=format&fit=crop') no-repeat center center fixed;
-      background-size: cover;
+      background-color: #090d16;
       color: #ffffff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       margin: 0;
@@ -115,3 +113,392 @@
       border: 1px solid rgba(197, 160, 89, 0.4);
       color: #ffffff;
       border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 15px;
+      box-sizing: border-box;
+    }
+    .tier-option {
+      background: #1a2233;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 10px;
+      border: 1px solid rgba(197, 160, 89, 0.3);
+      cursor: pointer;
+    }
+    .tier-option.selected {
+      border-color: #c5a059;
+      background: #222d44;
+    }
+    .action-btn {
+      background: #c5a059;
+      color: #090d16;
+      width: 100%;
+      padding: 14px;
+      font-weight: bold;
+      border-radius: 8px;
+      font-size: 15px;
+      border: none;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .secondary-btn {
+      background: transparent;
+      color: #c5a059;
+      border: 1px solid #c5a059;
+      width: 100%;
+      padding: 10px;
+      font-weight: bold;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      margin-bottom: 15px;
+    }
+    .upload-box {
+      border: 2px dashed rgba(197, 160, 89, 0.5);
+      padding: 12px;
+      text-align: center;
+      border-radius: 8px;
+      background: #1a2233;
+      margin-bottom: 15px;
+      cursor: pointer;
+    }
+    .map-container {
+      width: 100%;
+      height: 220px;
+      border-radius: 8px;
+      border: 1px solid rgba(197, 160, 89, 0.4);
+      margin-bottom: 15px;
+      z-index: 1;
+    }
+    .star {
+      font-size: 28px;
+      cursor: pointer;
+      color: #4a5568;
+    }
+    .star.active {
+      color: #c5a059;
+    }
+  </style>
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+
+  <!-- Landing Selection Screen -->
+  <div id="landing-view" class="landing-screen">
+    <h1>RideFlow Bahamas</h1>
+    <p>Select your experience to get started</p>
+    <div class="btn-main-group">
+      <button id="btn-request-ride" class="btn-ride-main" onclick="switchView('rider-destination-view')">Request Ride</button>
+      <button id="btn-become-driver" class="btn-driver-main" onclick="switchView('driver-view')">Become a Driver</button>
+    </div>
+    <button class="admin-link" onclick="openAdminPortal()">⚙ Admin Portal (Restricted)</button>
+  </div>
+
+  <!-- Admin Secure Passcode View -->
+  <div id="admin-login-view" class="app-section">
+    <button class="back-btn" onclick="switchView('landing-view')">← Back</button>
+    <div class="card" style="max-width: 400px; margin: 40px auto;">
+      <h3 style="color: #c5a059; margin-top: 0;">Admin Authentication</h3>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Enter admin passcode to access backend management.</p>
+      <label>Passcode</label>
+      <input type="password" id="admin-passcode" placeholder="Enter passcode (admin2026)">
+      <button class="action-btn" onclick="verifyAdminLogin()">Access Dashboard</button>
+    </div>
+  </div>
+
+  <!-- Admin Dashboard View -->
+  <div id="admin-dashboard-view" class="app-section">
+    <button class="back-btn" onclick="switchView('landing-view')">← Logout Admin</button>
+    <div class="card">
+      <h3 style="color: #c5a059; margin-top: 0;">🛡 RideFlow Admin Control Center</h3>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 20px;">Confidential master management view for platform financials, driver compliance, and support tickets.</p>
+
+      <!-- Financial Metrics Box -->
+      <div style="background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid #c5a059; margin-bottom: 20px;">
+        <h4 style="margin: 0 0 10px 0; color: #c5a059; font-size: 14px;">📊 Financial Summary</h4>
+        <p style="margin: 0 0 5px 0; font-size: 13px; color: #ffffff;"><strong>Total Platform Revenue (Escrow Handled):</strong> <span id="admin-total-rev">$142.00</span></p>
+        <p style="margin: 0 0 5px 0; font-size: 13px; color: #48bb78;"><strong>Total Admin Commission Earned:</strong> <span id="admin-total-comm">$21.00</span></p>
+        <p style="margin: 0; font-size: 13px; color: #a0aec0;"><strong>Total Driver Payouts Settled:</strong> <span id="admin-total-payout">$121.00</span></p>
+      </div>
+
+      <!-- Driver Fleet Oversight -->
+      <div style="background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid rgba(197, 160, 89, 0.4); margin-bottom: 20px;">
+        <h4 style="margin: 0 0 10px 0; color: #c5a059; font-size: 14px;">🚗 Active Driver Fleet Status</h4>
+        <div style="font-size: 12px; color: #a0aec0; line-height: 1.6;">
+          <p style="margin: 0;"><strong>Name:</strong> Marcus Miller (Plate: E-12948)</p>
+          <p style="margin: 0;"><strong>Bank Account:</strong> RBC Royal Bank Bahamas (••••4829)</p>
+          <p style="margin: 0;"><strong>Compliance Documents:</strong> <span style="color: #48bb78;">Active & Verified ($75 Paid)</span></p>
+          <p style="margin: 0;"><strong>Bad Reviews Count:</strong> <span id="admin-bad-reviews-display" style="color: #e53e3e; font-weight: bold;">0</span> / 5 threshold</p>
+        </div>
+        <button class="secondary-btn" style="margin-top: 12px; margin-bottom: 0;" onclick="resetDriverStrikes()">Reset Driver Strikes / Lift Ban</button>
+      </div>
+
+      <!-- Lost & Found Support Log -->
+      <div style="background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid rgba(197, 160, 89, 0.4);">
+        <h4 style="margin: 0 0 10px 0; color: #c5a059; font-size: 14px;">📦 Lost & Found Admin Log</h4>
+        <div id="admin-lost-log" style="font-size: 12px; color: #ffffff; background: #090d16; padding: 10px; border-radius: 6px; min-height: 50px;">
+          No active lost item reports currently logged.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 1: Choose Destination & Stops View -->
+  <div id="rider-destination-view" class="app-section">
+    <button class="back-btn" onclick="switchView('landing-view')">← Back</button>
+    <div class="card">
+      <h3>Where are you heading?</h3>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 10px;">Select your route and request your ride instantly.</p>
+      
+      <!-- Interactive Pin-Drop Map -->
+      <div id="destination-picker-map" class="map-container"></div>
+      <p style="font-size: 11px; color: #c5a059; margin-top: -10px; margin-bottom: 15px; text-align: center;">📍 Tap map to set drop-off stop</p>
+
+      <!-- Pickup Location with GPS Button -->
+      <label>Pickup Location</label>
+      <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+        <input type="text" id="pickup-loc" value="Central Nassau, Bahamas" style="margin-bottom: 0;">
+        <button type="button" onclick="useCurrentLocationGPS()" style="background: #1a2233; color: #c5a059; border: 1px solid #c5a059; padding: 0 12px; border-radius: 8px; font-weight: bold; cursor: pointer; white-space: nowrap; font-size: 12px;">📍 Use GPS</button>
+      </div>
+
+      <!-- Dynamic Stops Container -->
+      <label>Destination Drop-off & Stops</label>
+      <div id="stops-container">
+        <input type="text" class="stop-input" placeholder="Drop-off address or landmark..." value="Baha Mar, Cable Beach" oninput="calculateRealtimeFare()">
+      </div>
+      
+      <button type="button" class="secondary-btn" onclick="addStopField()">+ Add Stop</button>
+
+      <!-- Real-Time Fare Estimate Box -->
+      <div id="fare-estimate-box" style="background: #1a2233; padding: 12px; border-radius: 8px; border: 1px dashed #c5a059; margin-bottom: 15px; display: none;">
+        <p id="estimated-fare-text" style="margin: 0; font-size: 18px; color: #ffffff; font-weight: bold; text-align: center;"></p>
+        <p id="applied-surge-badge" style="margin: 4px 0 0 0; font-size: 11px; color: #c5a059; text-align: center; font-weight: bold;"></p>
+      </div>
+
+      <!-- Promo Code Section -->
+      <label>Promo Code (BAHAMAS2026 for $5 off)</label>
+      <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+        <input type="text" id="promo-code-input" placeholder="Enter promo code" style="margin-bottom: 0;">
+        <button type="button" onclick="applyPromoCode()" style="background: #1a2233; color: #c5a059; border: 1px solid #c5a059; padding: 0 12px; border-radius: 8px; font-weight: bold; cursor: pointer; white-space: nowrap; font-size: 12px;">Apply</button>
+      </div>
+
+      <h4 style="color: #c5a059; margin: 15px 0 8px 0; font-size: 14px;">Cashless Escrow Payment</h4>
+      <label>Card Number</label>
+      <input type="text" id="cc-num" value="4242 •••• •••• 4242">
+      
+      <div style="display: flex; gap: 10px;">
+        <div>
+          <label>Exp Date</label>
+          <input type="text" id="cc-exp" value="12/28">
+        </div>
+        <div>
+          <label>CVV</label>
+          <input type="text" id="cc-cvv" value="888">
+        </div>
+      </div>
+
+      <button class="action-btn" onclick="proceedToRideSelection()">Continue to Ride Selection</button>
+    </div>
+  </div>
+
+  <!-- Step 2: Choose Ride Tier View -->
+  <div id="rider-tier-view" class="app-section">
+    <button class="back-btn" onclick="switchView('rider-destination-view')">← Back</button>
+    <div class="card">
+      <h3>Select Vehicle Tier</h3>
+      <p id="dest-display" style="color: #c5a059; font-size: 14px; margin-bottom: 5px; font-weight: bold;"></p>
+      <p id="tier-fare-summary" style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;"></p>
+
+      <div class="tier-option" onclick="selectTier(this, 'Economy', dynamicEconomyPrice, numericEcoVal)">
+        <strong id="eco-label">RideFlow Economy</strong>
+        <p id="eco-desc" style="margin: 4px 0 0 0; font-size: 13px; color: #a0aec0;">Standard compact vehicle</p>
+      </div>
+      <div class="tier-option" onclick="selectTier(this, 'Comfort', dynamicComfortPrice, numericComfVal)" style="margin-top: 10px;">
+        <strong id="comf-label">RideFlow Comfort</strong>
+        <p id="comf-desc" style="margin: 4px 0 0 0; font-size: 13px; color: #a0aec0;">Mid-size sedan with AC</p>
+      </div>
+
+      <button class="action-btn" onclick="confirmRideRequest()">Authorize Escrow & Request Ride</button>
+    </div>
+  </div>
+
+  <!-- Driver Dispatch Queue Simulator View -->
+  <div id="driver-dispatch-view" class="app-section">
+    <div class="card" style="text-align: center; border-color: #48bb78;">
+      <h3 style="color: #48bb78; margin-top: 0;">📡 Live Driver Radar & Queue</h3>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 20px;">Broadcasting request to nearby approved drivers (Marcus Miller)...</p>
+      <div style="background: #1a2233; padding: 20px; border-radius: 8px; border: 1px dashed #c5a059; margin-bottom: 20px;">
+        <p style="font-size: 16px; color: #c5a059; font-weight: bold; margin: 0 0 10px 0;">Incoming Ride Request</p>
+        <p id="dispatch-details" style="font-size: 13px; color: #ffffff; margin: 0 0 15px 0;"></p>
+        <p style="font-size: 12px; color: #e53e3e; font-weight: bold;">⏱ Auto-declining in <span id="countdown-timer">15</span>s</p>
+      </div>
+      <button class="action-btn" style="background: #48bb78; color: #090d16;" onclick="driverAcceptRide()">Accept Ride Request</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Real-Time Live Tracking & Arrival View -->
+  <div id="rider-tracking-view" class="app-section">
+    <div class="card">
+      <h3 style="color: #48bb78; margin-top: 0;">Driver En Route (Real-Time Tracking)</h3>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Funds held in escrow. SMS alerts active. Arrive at destination to unlock rating and release payout.</p>
+      
+      <div id="active-trip-map" class="map-container"></div>
+
+      <div style="background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid rgba(197, 160, 89, 0.4); margin-bottom: 15px;">
+        <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Driver:</strong> Marcus Miller</p>
+        <p style="margin: 0 0 8px 0; font-size: 13px; color: #a0aec0;"><strong>License ID:</strong> BS-849201</p>
+        <hr style="border: 0; border-top: 1px solid rgba(197, 160, 89, 0.2); margin: 10px 0;">
+        <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Vehicle:</strong> Toyota Corolla (Silver)</p>
+        <p style="margin: 0; font-size: 14px; color: #c5a059; font-weight: bold;">License Plate: E-12948</p>
+      </div>
+
+      <button class="action-btn" style="background: #48bb78; color: #090d16; margin-bottom: 10px;" onclick="arriveAtDestination()">Arrived at Destination / Rate Driver</button>
+      <button class="action-btn" style="background: #e53e3e; color: #ffffff;" onclick="cancelRide()">Cancel Ride ($9.00 Fee)</button>
+    </div>
+  </div>
+
+  <!-- Step 4: Post-Ride Rating & Payout Release View -->
+  <div id="rider-feedback-view" class="app-section">
+    <div class="card" style="text-align: center;">
+      <h3 style="color: #c5a059; margin-top: 0;">Trip Completed</h3>
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Please rate your driver, Marcus Miller. <strong>Submitting your rating releases funds to the driver's bank account.</strong></p>
+      
+      <div id="star-container" style="margin-bottom: 20px;">
+        <span class="star" onclick="setRating(1)">★</span>
+        <span class="star" onclick="setRating(2)">★</span>
+        <span class="star" onclick="setRating(3)">★</span>
+        <span class="star" onclick="setRating(4)">★</span>
+        <span class="star" onclick="setRating(5)">★</span>
+      </div>
+
+      <div style="text-align: left; background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid rgba(197, 160, 89, 0.3); margin-bottom: 15px;">
+        <label style="color: #c5a059;">Left Something in the Vehicle?</label>
+        <p style="font-size: 12px; color: #a0aec0; margin-top: 0;">Describe what you left behind to text admin support.</p>
+        <textarea id="lost-item-desc" rows="2" placeholder="e.g., Black leather wallet..."></textarea>
+        <button class="action-btn" style="background: #2b6cb0; padding: 10px; font-size: 13px; margin-top: 5px;" onclick="reportLostItem()">Text Admin About Lost Item</button>
+      </div>
+
+      <button class="action-btn" onclick="submitRatingAndFinish()">Submit Rating & Finish (Release Payout)</button>
+    </div>
+  </div>
+
+  <!-- Driver Section View -->
+  <div id="driver-view" class="app-section">
+    <button class="back-btn" onclick="switchView('landing-view')">← Back</button>
+    <div class="card">
+      <h3>Driver Portal & Vehicle Requirements</h3>
+      
+      <!-- Earnings & Commission Card -->
+      <div style="background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid #c5a059; margin-bottom: 20px;">
+        <p style="margin: 0 0 6px 0; color: #c5a059; font-weight: bold; font-size: 15px;">💰 Driver Take-Home: 85% Earnings</p>
+        <p style="margin: 0; color: #a0aec0; font-size: 12px; line-height: 1.4;">
+          You take home 85% of every fare! Platform commission is automatically managed ($4.00 fee on trips $25 and above; $3.00 fee on trips under $25). Escrow funds deposit instantly into your bank account once the rider submits their rating.
+        </p>
+      </div>
+
+      <!-- Driver Payout History Ledger Tab -->
+      <div style="background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid rgba(197, 160, 89, 0.4); margin-bottom: 20px;">
+        <h4 style="margin: 0 0 10px 0; color: #c5a059; font-size: 14px;">📜 Earnings Payout Ledger</h4>
+        <div id="driver-ledger-log" style="font-size: 12px; color: #ffffff; background: #090d16; padding: 10px; border-radius: 6px; max-height: 120px; overflow-y: auto;">
+          <p style="margin: 0 0 4px 0; color: #48bb78;">[REF-8491]: Trip Completed - Earned $15.00 (Deposited to RBC •••4829)</p>
+        </div>
+      </div>
+
+      <!-- Driver Requirements Guidelines -->
+      <div style="background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid rgba(197, 160, 89, 0.3); margin-bottom: 20px;">
+        <p style="margin: 0 0 8px 0; color: #ffffff; font-weight: bold; font-size: 14px;">📋 Driver & Vehicle Standards</p>
+        <ul style="margin: 0; padding-left: 18px; color: #a0aec0; font-size: 12px; line-height: 1.5;">
+          <li><strong>Age Requirement:</strong> You must be 25 years or older to drive.</li>
+          <li><strong>Doors and Seats:</strong> Your car must have 4 doors and seat 5 to 8 people (including the driver).</li>
+          <li><strong>Vehicle Age:</strong> Vehicles must be from 2009 or newer.</li>
+          <li><strong>Documents:</strong> Provide valid registration, personal auto insurance showing your name or VIN, and a regional vehicle inspection certificate.</li>
+          <li><strong>Rental Program:</strong> Don't own a car? You can rent one directly through the RideFlow rental program.</li>
+        </ul>
+      </div>
+
+      <p style="color: #a0aec0; font-size: 13px; margin-bottom: 15px;">Upload your credentials and bank info below. Expired documents automatically lock your driving status until renewed.</p>
+      
+      <!-- Driver License & Expiry -->
+      <label>Road Traffic Department Driver's License</label>
+      <div class="upload-box" onclick="document.getElementById('license-file').click()">
+        <span style="color: #c5a059; font-weight: bold; font-size: 13px;">📁 Upload Driver's License</span>
+        <input type="file" id="license-file" style="display:none;" onchange="updateFileName('license-file', 'license-status')">
+        <p id="license-status" style="margin: 3px 0 0 0; font-size: 11px; color: #a0aec0;">No file chosen</p>
+      </div>
+      <label>License Expiration Date</label>
+      <input type="date" id="lic-exp-date" value="2027-12-31">
+
+      <!-- Vehicle License / Inspection Expiry -->
+      <label>Vehicle License (Road Traffic Inspection)</label>
+      <div class="upload-box" onclick="document.getElementById('inspection-file').click()">
+        <span style="color: #c5a059; font-weight: bold; font-size: 13px;">📁 Upload Vehicle Inspection / License</span>
+        <input type="file" id="inspection-file" style="display:none;" onchange="updateFileName('inspection-file', 'inspection-status')">
+        <p id="inspection-status" style="margin: 3px 0 0 0; font-size: 11px; color: #a0aec0;">No file chosen</p>
+      </div>
+      <label>Vehicle License Expiration Date</label>
+      <input type="date" id="veh-exp-date" value="2027-12-31">
+
+      <!-- Insurance Expiry -->
+      <label>Vehicle Insurance Certificate</label>
+      <div class="upload-box" onclick="document.getElementById('insurance-file').click()">
+        <span style="color: #c5a059; font-weight: bold; font-size: 13px;">📁 Upload Insurance Document</span>
+        <input type="file" id="insurance-file" style="display:none;" onchange="updateFileName('insurance-file', 'insurance-status')">
+        <p id="insurance-status" style="margin: 3px 0 0 0; font-size: 11px; color: #a0aec0;">No file chosen</p>
+      </div>
+      <label>Insurance Expiration Date</label>
+      <input type="date" id="ins-exp-date" value="2027-12-31">
+
+      <!-- Police Record -->
+      <label>Police Character Record (Certificate)</label>
+      <div class="upload-box" onclick="document.getElementById('police-file').click()">
+        <span style="color: #c5a059; font-weight: bold; font-size: 13px;">📁 Upload Police Record</span>
+        <input type="file" id="police-file" style="display:none;" onchange="updateFileName('police-file', 'police-status')">
+        <p id="police-status" style="margin: 3px 0 0 0; font-size: 11px; color: #a0aec0;">No file chosen</p>
+      </div>
+
+      <hr style="border: 0; border-top: 1px solid rgba(197, 160, 89, 0.3); margin: 20px 0;">
+
+      <!-- Direct Bank Account Payout Configuration -->
+      <label style="color: #c5a059; font-size: 14px;">Direct Bank Payout Destination</label>
+      <select id="bank-name">
+        <option value="RBC Royal Bank Bahamas">RBC Royal Bank Bahamas</option>
+        <option value="CIBC Caribbean (FirstCaribbean)">CIBC Caribbean (FirstCaribbean)</option>
+        <option value="Bank of Nova Scotia (Scotiabank)">Bank of Nova Scotia (Scotiabank)</option>
+        <option value="Commonwealth Bank">Commonwealth Bank</option>
+        <option value="FINCO">FINCO</option>
+        <option value="Bahamas First / Other Local Bank">Other Local Bank / Credit Union</option>
+      </select>
+
+      <label>Bank Account Number</label>
+      <input type="text" id="bank-acc-num" placeholder="Enter your bank account number">
+
+      <label>Transit / Branch / Routing Code</label>
+      <input type="text" id="bank-routing" placeholder="Enter branch transit or routing code">
+
+      <!-- Registration & Renewal Fee Payment Section ($75.00) -->
+      <div style="background: #1a2233; padding: 15px; border-radius: 8px; border: 1px solid #c5a059; margin-top: 15px; margin-bottom: 15px;">
+        <p style="margin: 0 0 8px 0; font-size: 14px; color: #c5a059; font-weight: bold;">💳 Registration / Renewal Fee: $75.00</p>
+        <p style="margin: 0 0 10px 0; font-size: 11px; color: #a0aec0;">Covers initial registration ($50) or compliance renewal verification ($75) upon document expiry.</p>
+        <label>Driver Card Number</label>
+        <input type="text" id="driver-cc-num" value="4242 •••• •••• 4242">
+        
+        <div style="display: flex; gap: 10px;">
+          <div>
+            <label>Exp Date</label>
+            <input type="text" id="driver-cc-exp" value="12/28">
+          </div>
+          <div>
+            <label>CVV</label>
+            <input type="text" id="driver-cc-cvv" value="888">
+          </div>
+        </div>
+      </div>
+
+      <button class="action-btn" onclick="submitCredentials()">Pay $75 Fee & Link Bank Account</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
