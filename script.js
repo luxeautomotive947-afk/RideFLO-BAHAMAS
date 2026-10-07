@@ -48,7 +48,7 @@ function openAdminPortal() {
 
 function verifyAdminLogin() {
   const code = document.getElementById('admin-passcode').value;
-  if (code === 'admin2026') {
+  if (code === 'Luxe$2020$') {
     document.getElementById('admin-passcode').value = '';
     updateAdminDashboardStats();
     switchView('admin-dashboard-view');
